@@ -1,0 +1,8 @@
+{
+  "policy_sensitivity": "G(s,a) = (1/T)*pi(a|s)*(Phi(a) - E_pi[Phi])",
+  "kl_expansion": "D_KL = (eps^2/2)*||G||^2_F + O(eps^3)",
+  "threshold_formula": "tau = sqrt(2*delta / ||G||^2_F)",
+  "sigma_dependence": "tau propto sigma^(-alpha) where alpha depends on Q-value spread scaling",
+  "h_dependence": "tau propto h^(-beta) with beta -> 1 for large h",
+  "spectral_dependence": "tau depends on spectral gap Delta of P_{pi_0}"
+}

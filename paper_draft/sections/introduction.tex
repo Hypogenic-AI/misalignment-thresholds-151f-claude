@@ -1,0 +1,82 @@
+\section{Introduction}\label{sec:intro}
+
+Large language model (LLM) based agents are increasingly deployed as
+autonomous decision-makers in financial markets, where they execute trading
+strategies with minimal human oversight~\cite{xiao2024tradingagents,
+liu2025finrs}. In such settings, the agent optimizes a proxy reward that
+approximates, but does not perfectly capture, the principal's true objective.
+When the proxy reward is susceptible to perturbation---whether through
+adversarial manipulation, distributional shift, or specification error---the
+agent's behavior may deviate from the intended objective, a phenomenon broadly
+termed \emph{misalignment}. Given the economic stakes of automated trading, a
+quantitative understanding of when misalignment becomes behaviorally
+significant is essential for responsible deployment.
+
+The theoretical foundations of misalignment have advanced considerably.
+Skalse et al.~\cite{skalse2022defining} proved that reward hacking is
+generically unavoidable: over any open set of stochastic policies, every
+non-trivial proxy reward is hackable. Wang and Huang~\cite{wang2026reward}
+showed that distortion is inevitable under finite evaluation, and conjectured
+the existence of a phase transition between gaming and degrading regimes.
+On the empirical side, Debenedetti et al.~\cite{debenedetti2023scaling}
+established a power-law relationship between compute and adversarial
+robustness with a remarkably small exponent ($\alpha \approx 0.01$),
+while Nathanson et al.~\cite{nathanson2026scaling} demonstrated logarithmic
+scaling of adversarial harm with model size ratios.
+
+Despite these advances, no existing framework provides a quantitative answer
+to the following question: \emph{given a trading agent with specific policy
+parameters operating in a market with given volatility and decision horizon,
+what is the minimum perturbation intensity that induces statistically
+significant misalignment?} The impossibility results of
+\cite{skalse2022defining} guarantee that misalignment can occur but do not
+predict the perturbation magnitude required. The distortion analysis of
+\cite{wang2026reward} characterizes the direction of misalignment but not
+the threshold intensity. The empirical scaling laws of
+\cite{debenedetti2023scaling, nathanson2026scaling} lack theoretical
+derivation and do not connect to market-specific parameters.
+
+In this paper, we develop a rigorous mathematical framework for
+\emph{misalignment sensitivity thresholds} in the context of
+softmax-parameterized trading agents operating in finite Markov decision
+processes (MDPs). Our contributions are as follows.
+
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=4pt]
+\item We introduce the misalignment sensitivity threshold $\tau(\delta)$,
+  defined as the infimum perturbation intensity $\varepsilon$ for which the
+  KL divergence between perturbed and baseline policies exceeds a
+  significance level $\delta$ (Definition~\ref{def:threshold}).
+\item We prove that $\tau(\delta)$ exists and is finite for any finite MDP
+  with softmax policies (Theorem~\ref{thm:existence}), and characterize it
+  via the Fisher information of the policy parameterization:
+  $\tau(\delta) = \sqrt{2\delta/\lVert G \rVert_F^2} + O(\delta)$
+  (Theorem~\ref{thm:characterization}).
+\item We establish the temperature scaling law $\tau \propto T$
+  (Corollary~\ref{cor:temperature}), identifying the softmax temperature as
+  the dominant determinant of misalignment robustness.
+\item We prove that market volatility $\sigma$ and decision horizon $h$ are
+  asymptotically negligible, with $\tau(\sigma) = \tau_0 + O(\sigma^{-2})$
+  and $\tau(h) = \tau_0 + O(h^{-1})$ (Propositions~\ref{prop:volatility}
+  and~\ref{prop:horizon}), refuting the initially hypothesized power-law
+  dependence $\tau \propto \sigma^{-\alpha} h^{-\beta}$.
+\item We verify all theoretical predictions computationally across more than
+  one hundred MDP configurations, confirming the linear temperature scaling
+  with $R^2 = 0.999$ and the negligible market-parameter exponents
+  $|\alpha|, |\beta| < 0.02$.
+\end{itemize}
+
+The proofs combine perturbation analysis of softmax policies, second-order
+Taylor expansion of KL divergence, and the standard softmax gradient identity.
+The key technical insight is that the Fisher information of a softmax
+distribution concentrates the sensitivity of the policy in a single
+parameter---the temperature $T$---that governs the ``peakedness'' of the
+decision distribution. Market parameters affect the Q-values but not the
+mechanism by which perturbations propagate through the softmax, leading to
+their asymptotic irrelevance.
+
+The paper is organized as follows. Section~\ref{sec:prelim} establishes
+notation and defines the trading MDP, intervention operators, and the
+misalignment threshold. Section~\ref{sec:main} states and proves the main
+results. Section~\ref{sec:discussion} discusses implications, connections to
+existing work, and open questions. Section~\ref{sec:conclusion} summarizes
+our contributions.

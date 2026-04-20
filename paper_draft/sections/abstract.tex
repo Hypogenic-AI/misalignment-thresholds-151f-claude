@@ -1,0 +1,21 @@
+We study the problem of quantifying the vulnerability of softmax-parameterized
+trading agents to misalignment, defined as behavioral deviation from intended
+objectives induced by adversarial reward perturbations. We introduce the
+\emph{misalignment sensitivity threshold} $\tau(\delta)$, the minimum
+perturbation intensity required to produce a KL divergence exceeding $\delta$
+between the perturbed and baseline policies. Our main result establishes that
+$\tau(\delta) = \sqrt{2\delta / \lVert G \rVert_F^2} + O(\delta)$, where
+$\lVert G \rVert_F^2$ is the Fisher information norm of the policy gradient
+sensitivity. We prove that the Fisher information norm scales as
+$\lVert G \rVert_F^2 \propto 1/T^2$, yielding the temperature scaling law
+$\tau \propto T$. This identifies the softmax temperature as the primary
+determinant of misalignment robustness, with lower temperatures producing
+greater vulnerability. We further show that market volatility $\sigma$ and
+decision horizon $h$ have asymptotically negligible effects on the threshold,
+entering only at order $O(\sigma^{-2})$ and $O(h^{-1})$ respectively. These
+theoretical predictions are verified computationally across more than one
+hundred MDP configurations, confirming the linear temperature scaling
+($R^2 = 0.999$) and the negligible dependence on market parameters
+($|\alpha|, |\beta| < 0.02$). Our results redirect the focus of misalignment
+safety from external market conditions to internal policy architecture, providing
+an actionable metric for deployment decisions.

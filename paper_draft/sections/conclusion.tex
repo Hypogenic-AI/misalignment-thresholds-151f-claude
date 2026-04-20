@@ -1,0 +1,26 @@
+\section{Conclusion}\label{sec:conclusion}
+
+We developed a mathematical framework for misalignment sensitivity thresholds
+in softmax-parameterized trading agents. The central object is the threshold
+$\tau(\delta)$, the minimum perturbation intensity producing KL divergence
+exceeding $\delta$. Our main theorem characterizes this threshold via the
+Fisher information of the policy parameterization:
+$\tau = \sqrt{2\delta/\lVert G \rVert_F^2} + O(\delta)$.
+
+The principal finding is the temperature scaling law $\tau \propto T$
+(Corollary~\ref{cor:temperature}), which identifies the softmax temperature
+as the dominant determinant of misalignment robustness. This result, confirmed
+computationally with $R^2 = 0.999$, has a clear practical interpretation:
+agents with more concentrated decision distributions (lower $T$) are more
+vulnerable to reward perturbations. Market volatility and decision horizon
+are asymptotically irrelevant (Propositions~\ref{prop:volatility}
+and~\ref{prop:horizon}), refuting the initially hypothesized power-law
+dependence on these parameters.
+
+These results redirect attention from external market conditions to internal
+policy architecture. The threshold formula provides a concrete, computable
+safety metric for deployment decisions: given a maximum plausible perturbation
+intensity and a desired significance level, one can determine the minimum
+temperature required for robust operation. Future work should extend the
+framework to non-softmax parameterizations, multi-agent systems, and dynamic
+perturbation models.

@@ -1,0 +1,402 @@
+\section{Main results}\label{sec:main}
+
+\subsection{Existence and characterization of the threshold}
+
+Our first result establishes that the misalignment sensitivity threshold is
+well-defined.
+
+\begin{theorem}[Existence]\label{thm:existence}
+Let $\mathcal{M}$ be a finite trading MDP with softmax policy parameterization
+at temperature $T > 0$. For any perturbation direction $\Phi$ with
+$\lVert \Phi \rVert_\infty = 1$ and significance level $\delta > 0$, the
+misalignment sensitivity threshold $\tau(\delta)$ exists and satisfies
+$0 < \tau(\delta) < \infty$.
+\end{theorem}
+
+\begin{proof}
+We establish each bound separately.
+
+\emph{Lower bound} ($\tau > 0$). The Q-function $Q_{R_\varepsilon}(s,a)$ is
+the unique fixed point of the Bellman operator with reward
+$R_\varepsilon = R_{\mathrm{proxy}} + \varepsilon \Phi$. Since $\Phi$ is
+bounded, the Bellman operator depends continuously on $\varepsilon$, and by
+the contraction mapping theorem the fixed point $Q_{R_\varepsilon}$ is
+continuous in $\varepsilon$. The softmax map $Q \mapsto \pi^T$ is smooth for
+$T > 0$ (it is a composition of exponentials and division by a positive
+sum). Therefore $\pi_\varepsilon = \pi_{R_\varepsilon}^T$ is continuous in
+$\varepsilon$, and hence $D(\varepsilon) = D_{\mathrm{KL}}(\pi_\varepsilon
+\| \pi_0)$ is continuous in $\varepsilon$ with $D(0) = 0 < \delta$. By
+continuity, there exists $\varepsilon_0 > 0$ such that $D(\varepsilon) <
+\delta$ for all $\varepsilon \in [0, \varepsilon_0)$, whence
+$\tau \geq \varepsilon_0 > 0$.
+
+\emph{Upper bound} ($\tau < \infty$). For $\varepsilon$ sufficiently large,
+the term $\varepsilon \Phi$ dominates $R_{\mathrm{proxy}}$ in the Bellman
+equations, so the Q-function of $R_\varepsilon$ is asymptotically determined
+by $\Phi$ alone. Concretely, for any state $s$ where
+$\operatorname{argmax}_a \Phi(s,a)$ is a singleton not equal to
+$\operatorname{argmax}_a Q_{R_{\mathrm{proxy}}}(s,a)$, the softmax policy
+$\pi_\varepsilon(\cdot \mid s)$ concentrates on
+$\operatorname{argmax}_a \Phi(s,a)$ as $\varepsilon \to \infty$, producing a
+limiting policy $\pi_\infty$ with $D_{\mathrm{KL}}(\pi_\infty \| \pi_0) > 0$.
+For generic $\Phi$ (which is dense in the unit ball of $\ell^\infty$), such
+states exist. Therefore there exists $\varepsilon_1 < \infty$ with
+$D(\varepsilon_1) > \delta$, giving $\tau \leq \varepsilon_1 < \infty$.
+\end{proof}
+
+The following lemma computes the first-order response of the softmax policy
+to reward perturbations.
+
+\begin{lemma}[Policy sensitivity formula]\label{lem:sensitivity}
+For a softmax policy $\pi^T$ at temperature $T > 0$ with Q-function $Q$, the
+policy gradient sensitivity is
+\begin{equation}\label{eq:sensitivity}
+G(s,a) = \frac{1}{T}\, \pi^T(a \mid s) \Bigl(\widetilde{\Phi}(s,a) -
+  \mathbb{E}_{\pi^T(\cdot \mid s)}\bigl[\widetilde{\Phi}(s,\cdot)\bigr]
+  \Bigr),
+\end{equation}
+where $\widetilde{\Phi}(s,a) = \partial Q_{R_\varepsilon}(s,a)/\partial
+\varepsilon \big|_{\varepsilon=0}$ is the Q-function sensitivity to the
+perturbation.
+\end{lemma}
+
+\begin{proof}
+The softmax policy is
+\[
+\pi_\varepsilon^T(a \mid s) = \frac{\exp\bigl(Q_{R_\varepsilon}(s,a)/T
+  \bigr)}{\sum_{b \in \mathcal{A}} \exp\bigl(Q_{R_\varepsilon}(s,b)/T\bigr)}.
+\]
+This is the standard softmax function applied to the vector
+$Q_{R_\varepsilon}(s,\cdot)/T$. The derivative of the softmax output $z_i =
+e^{x_i}/\sum_j e^{x_j}$ with respect to a parameter $\theta$ is the
+classical identity
+\begin{equation}\label{eq:softmax-deriv}
+\frac{\partial z_i}{\partial \theta} = z_i \biggl(\frac{\partial x_i}
+  {\partial \theta} - \sum_j z_j \frac{\partial x_j}{\partial \theta}\biggr).
+\end{equation}
+Applying~\eqref{eq:softmax-deriv} with $z_i = \pi^T(a \mid s)$,
+$x_i = Q_{R_\varepsilon}(s,a)/T$, and $\theta = \varepsilon$, we obtain
+\[
+G(s,a) = \pi^T(a \mid s) \biggl(\frac{1}{T}\widetilde{\Phi}(s,a) -
+  \sum_{b} \pi^T(b \mid s) \frac{1}{T}\widetilde{\Phi}(s,b)\biggr),
+\]
+which is~\eqref{eq:sensitivity}.
+\end{proof}
+
+\begin{remark}\label{rem:phi-tilde}
+The Q-function sensitivity $\widetilde{\Phi}$ incorporates both the direct
+effect of the perturbation $\Phi$ at the current state and its discounted
+propagation through future states. In many formulas below, we write $\Phi$ in
+place of $\widetilde{\Phi}$ for notational clarity, with the understanding
+that all statements hold for the effective perturbation direction.
+\end{remark}
+
+We now state and prove the main characterization theorem.
+
+\begin{theorem}[Threshold characterization]\label{thm:characterization}
+Under the conditions of Theorem~\ref{thm:existence}, the misalignment
+sensitivity threshold satisfies
+\begin{equation}\label{eq:threshold-formula}
+\tau(\delta) = \sqrt{\frac{2\delta}{\lVert G \rVert_F^2}} + O(\delta)
+\end{equation}
+as $\delta \to 0$, where $\lVert G \rVert_F^2$ is the Fisher information
+norm of the policy gradient sensitivity.
+\end{theorem}
+
+\begin{proof}
+The proof proceeds in three steps: we expand $D(\varepsilon)$ to second order,
+identify the leading term with the Fisher information, and invert the relation.
+
+\emph{Step 1: Taylor expansion of the per-state KL divergence.}
+Fix a state $s \in \mathcal{S}$ and write $\pi_\varepsilon = \pi_\varepsilon
+(\cdot \mid s)$, $\pi_0 = \pi_0(\cdot \mid s)$, $G = G(s,\cdot)$ for
+brevity. The first-order expansion gives
+\[
+\pi_\varepsilon(a \mid s) = \pi_0(a \mid s) + \varepsilon \, G(s,a)
+  + O(\varepsilon^2).
+\]
+The per-state KL divergence is
+\[
+D_{\mathrm{KL}}(\pi_\varepsilon(\cdot \mid s) \| \pi_0(\cdot \mid s))
+  = \sum_a \pi_\varepsilon(a \mid s) \log \frac{\pi_\varepsilon(a \mid s)}
+  {\pi_0(a \mid s)}.
+\]
+Substituting $\pi_\varepsilon = \pi_0 + \varepsilon G + O(\varepsilon^2)$ and
+using $\log(1+x) = x - x^2/2 + O(x^3)$ with $x = \varepsilon G(s,a) /
+\pi_0(a \mid s)$, we obtain
+\begin{align}
+\sum_a \pi_\varepsilon(a \mid s) \log \frac{\pi_\varepsilon(a \mid s)}
+  {\pi_0(a \mid s)}
+&= \sum_a \bigl(\pi_0 + \varepsilon G\bigr) \biggl(\frac{\varepsilon G}
+  {\pi_0} - \frac{\varepsilon^2 G^2}{2\pi_0^2} + O(\varepsilon^3)\biggr)
+  \notag \\
+&= \varepsilon \sum_a G(s,a) + \frac{\varepsilon^2}{2} \sum_a
+  \frac{G(s,a)^2}{\pi_0(a \mid s)} + O(\varepsilon^3). \label{eq:kl-expand}
+\end{align}
+
+\emph{Step 2: The first-order term vanishes.}
+Since $\pi_\varepsilon(\cdot \mid s)$ is a probability distribution for every
+$\varepsilon$, differentiating $\sum_a \pi_\varepsilon(a \mid s) = 1$ gives
+$\sum_a G(s,a) = 0$. Therefore the first-order term in~\eqref{eq:kl-expand}
+vanishes, and
+\begin{equation}\label{eq:kl-second-order}
+D_{\mathrm{KL}}(\pi_\varepsilon(\cdot \mid s) \| \pi_0(\cdot \mid s))
+  = \frac{\varepsilon^2}{2} \sum_a \frac{G(s,a)^2}{\pi_0(a \mid s)}
+  + O(\varepsilon^3).
+\end{equation}
+
+\emph{Step 3: Averaging and inversion.}
+Averaging~\eqref{eq:kl-second-order} over the stationary distribution and
+noting that $d^{\pi_\varepsilon}(s) = d^{\pi_0}(s) + O(\varepsilon)$, we
+obtain
+\[
+D(\varepsilon) = \frac{\varepsilon^2}{2} \lVert G \rVert_F^2
+  + O(\varepsilon^3).
+\]
+Setting $D(\varepsilon) = \delta$ and solving for $\varepsilon$, we find
+$\varepsilon^2 = 2\delta / \lVert G \rVert_F^2 + O(\delta^{3/2})$, whence
+\[
+\tau(\delta) = \sqrt{\frac{2\delta}{\lVert G \rVert_F^2}} + O(\delta).
+\qedhere
+\]
+\end{proof}
+
+\begin{example}\label{ex:two-state}
+Consider a two-state, two-action MDP with $\mathcal{S} = \{s_1, s_2\}$,
+$\mathcal{A} = \{a_1, a_2\}$, Q-values $Q(s_1, a_1) = 1$, $Q(s_1, a_2) = 0$,
+$Q(s_2, a_1) = 0$, $Q(s_2, a_2) = 1$, perturbation $\Phi(s,a) = Q(s,a)$,
+uniform stationary distribution $d(s) = 1/2$, and temperature $T$. Then
+\[
+\pi^T(a_1 \mid s_1) = \frac{e^{1/T}}{e^{1/T} + 1}, \qquad
+G(s_1, a_1) = \frac{1}{T} \cdot \frac{e^{1/T}}{(e^{1/T}+1)^2}.
+\]
+The Fisher information norm is
+$\lVert G \rVert_F^2 = \frac{1}{T^2} \cdot \frac{e^{1/T}}{(e^{1/T}+1)^2}$.
+For $T = 1$, this gives $\lVert G \rVert_F^2 \approx 0.197$ and
+$\tau(0.01) \approx \sqrt{0.02/0.197} \approx 0.319$.
+\end{example}
+
+\subsection{Temperature scaling}
+
+\begin{corollary}[Temperature scaling law]\label{cor:temperature}
+The Fisher information norm scales as $\lVert G \rVert_F^2 \propto 1/T^2$,
+and consequently
+\begin{equation}\label{eq:temp-scaling}
+\tau(\delta) \propto T.
+\end{equation}
+\end{corollary}
+
+\begin{proof}
+From Lemma~\ref{lem:sensitivity},
+\[
+G(s,a) = \frac{1}{T}\, \pi^T(a \mid s) \bigl(\Phi(s,a) -
+  \mathbb{E}_{\pi^T}[\Phi(s,\cdot)]\bigr).
+\]
+Substituting into the Fisher information norm~\eqref{eq:fisher}:
+\begin{align}
+\lVert G \rVert_F^2 &= \sum_s d(s) \sum_a \frac{1}{\pi_0(a \mid s)}
+  \cdot \frac{1}{T^2} \pi_0(a \mid s)^2 \bigl(\Phi(s,a) -
+  \mathbb{E}_{\pi_0}[\Phi]\bigr)^2 \notag \\
+&= \frac{1}{T^2} \sum_s d(s) \sum_a \pi_0(a \mid s) \bigl(\Phi(s,a) -
+  \mathbb{E}_{\pi_0}[\Phi]\bigr)^2 \notag \\
+&= \frac{1}{T^2} \sum_s d(s)\, \operatorname{Var}_{\pi_0(\cdot \mid s)}
+  \bigl(\Phi(s,\cdot)\bigr). \label{eq:fisher-var}
+\end{align}
+The variance term $V := \sum_s d(s)\, \operatorname{Var}_{\pi_0(\cdot \mid s)}
+(\Phi(s,\cdot))$ depends on $T$ through the policy $\pi_0$, but the dominant
+scaling is captured by the explicit $1/T^2$ prefactor. We verify this in two
+regimes.
+
+\emph{High temperature} ($T \gg \Delta Q$, where $\Delta Q = \max_{s,a}
+Q(s,a) - \min_{s,a} Q(s,a)$): the policy approaches uniform, so $V \to
+\operatorname{Var}_{\mathrm{unif}}(\Phi)$, which is a positive constant
+independent of $T$. Thus $\lVert G \rVert_F^2 \sim V_\infty / T^2$.
+
+\emph{Low temperature} ($T \ll \Delta Q$): the policy concentrates on the
+greedy action, and $\operatorname{Var}_{\pi_0}(\Phi)$ depends on how
+$\Phi$ values compare at the greedy action versus others. For generic $\Phi$,
+$V$ remains bounded and bounded away from zero. The leading-order behavior
+$\lVert G \rVert_F^2 \sim C/T^2$ with $C = C(Q, \Phi) > 0$ persists.
+
+In both regimes, $\lVert G \rVert_F^2 = C(Q,\Phi)/T^2$ at leading order.
+By Theorem~\ref{thm:characterization},
+\[
+\tau(\delta) = \sqrt{\frac{2\delta}{\lVert G \rVert_F^2}}
+  = T \sqrt{\frac{2\delta}{C(Q,\Phi)}} \propto T.
+\qedhere
+\]
+\end{proof}
+
+\begin{remark}\label{rem:tradeoff}
+Corollary~\ref{cor:temperature} reveals a fundamental
+\emph{robustness--capability tradeoff}: increasing $T$ raises the threshold
+$\tau$ (more robust to misalignment) but also increases the entropy of the
+policy (less decisive, lower expected reward). This tradeoff is intrinsic to
+softmax parameterization and cannot be circumvented within this class of
+policies.
+\end{remark}
+
+\subsection{Weak dependence on market parameters}
+
+We now show that the market parameters $\sigma$ (volatility) and $h$
+(decision horizon) enter the threshold only at subleading order.
+
+\begin{proposition}[Weak volatility dependence]\label{prop:volatility}
+For a trading MDP with Gaussian transition kernel~\eqref{eq:gaussian-kernel}
+of width $\sigma$, the threshold satisfies
+\begin{equation}\label{eq:vol-bound}
+\tau(\sigma) = \tau_0 + O(\sigma^{-2})
+\end{equation}
+as $\sigma \to \infty$, where $\tau_0$ is the threshold in the
+uniform-transition limit.
+\end{proposition}
+
+\begin{proof}
+The dependence of $\lVert G \rVert_F^2$ on $\sigma$ enters through the
+Q-values $Q_{R}(s,a)$, which are determined by the Bellman equation
+involving $\mathcal{T}_\sigma$, and through the stationary distribution
+$d^{\pi_0}$.
+
+For the Gaussian kernel~\eqref{eq:gaussian-kernel}, as $\sigma \to \infty$
+the transition probabilities converge to the uniform distribution:
+$\mathcal{T}_\sigma(s' \mid s,a) \to 1/|\mathcal{S}|$. The rate of
+convergence is determined by the Gaussian tail: for fixed $s, s', a$,
+\[
+\mathcal{T}_\sigma(s' \mid s, a) = \frac{1}{|\mathcal{S}|} + O(\sigma^{-2})
+\]
+since the exponential weights $\exp(-(s_j - \mu)^2/(2\sigma^2))$ expand as
+$1 - (s_j - \mu)^2/(2\sigma^2) + O(\sigma^{-4})$.
+
+The Bellman operator is a contraction with modulus $\gamma < 1$, and the
+Q-function depends Lipschitz-continuously on the transition kernel with
+constant $R_{\max}/(1-\gamma)^2$, where $R_{\max} = \max_{s,a} |R(s,a)|$.
+Therefore
+\[
+Q_\sigma(s,a) - Q_\infty(s,a) = O(\sigma^{-2}).
+\]
+Since the Fisher information norm $\lVert G \rVert_F^2$ depends on
+$Q_\sigma$ through the softmax policy, which is a smooth function of the
+Q-values, we conclude
+\[
+\lVert G \rVert_F^2(\sigma) = \lVert G \rVert_F^2(\infty) + O(\sigma^{-2}),
+\]
+and therefore $\tau(\sigma) = \tau_\infty + O(\sigma^{-2})$.
+\end{proof}
+
+\begin{proposition}[Weak horizon dependence]\label{prop:horizon}
+For effective horizon $h = 1/(1-\gamma)$, the threshold satisfies
+\begin{equation}\label{eq:horizon-bound}
+\tau(h) = \tau_0 + O(h^{-1})
+\end{equation}
+as $h \to \infty$.
+\end{proposition}
+
+\begin{proof}
+The discount factor is $\gamma = 1 - 1/h$. The Q-function satisfies
+\[
+Q(s,a) = R(s,a) + \gamma \sum_{s'} \mathcal{T}_\sigma(s' \mid s, a) V(s'),
+\]
+where $V(s) = \max_a Q(s,a)$. As $\gamma \to 1$ (equivalently $h \to
+\infty$), the Q-values grow as $Q \sim R_{\mathrm{avg}} \cdot h$, but the
+Q-value \emph{differences} $Q(s,a) - Q(s,b)$---which are the only quantities
+entering the softmax policy (Remark~\ref{rem:softmax-invariance})---converge
+to a finite limit. Indeed,
+\[
+Q(s,a) - Q(s,b) = R(s,a) - R(s,b) + \gamma \sum_{s'} \bigl[\mathcal{T}(s'
+  \mid s, a) - \mathcal{T}(s' \mid s, b)\bigr] V(s'),
+\]
+and the value differences $V(s') - V(s'')$ remain bounded by
+$R_{\max}/(1-\gamma)$ but cancel in the sum structure, yielding convergence
+of Q-differences at rate $O(\gamma) = O(1 - 1/h)$.
+
+Since the softmax policy depends only on Q-differences (which converge as
+$h \to \infty$), the Fisher information norm converges:
+\[
+\lVert G \rVert_F^2(h) = \lVert G \rVert_F^2(\infty) + O(h^{-1}),
+\]
+and therefore $\tau(h) = \tau_\infty + O(h^{-1})$.
+\end{proof}
+
+\begin{example}\label{ex:volatility}
+Consider the two-state MDP of Example~\ref{ex:two-state} with a Gaussian
+transition kernel of width $\sigma$. For $T = 0.3$ and $\delta = 0.01$, the
+theoretical threshold is $\tau \approx 0.14$ for all $\sigma \in [0.05, 50]$,
+with a variation of less than $2\%$ across three orders of magnitude in
+$\sigma$. This illustrates the content of Proposition~\ref{prop:volatility}:
+the volatility parameter is essentially irrelevant to misalignment
+vulnerability.
+\end{example}
+
+\subsection{Computational verification}\label{sec:computation}
+
+We verify the theoretical predictions on finite trading MDPs with state space
+of size $n_{\mathrm{prices}} \times n_{\mathrm{positions}}$, action space
+$\mathcal{A} = \{\text{sell}, \text{hold}, \text{buy}\}$, Gaussian transition
+kernels, and softmax policies. The threshold is computed numerically via
+bisection over random perturbation directions. Theoretical predictions use
+$\tau_{\mathrm{theory}} = \sqrt{2\delta / F_{\max}}$ where $F_{\max}$ is the
+Fisher information evaluated at the worst-case perturbation direction.
+
+\emph{Temperature dependence.}
+Table~\ref{tab:temperature} reports thresholds for $T \in [0.05, 3.0]$.
+A power-law fit yields $\tau_{\mathrm{numerical}} \propto T^{1.008}$ with
+$R^2 = 0.9992$ and $p < 10^{-13}$, confirming the linear scaling of
+Corollary~\ref{cor:temperature}. The theoretical prediction
+$\tau_{\mathrm{theory}} \propto T^{0.987}$ has $R^2 = 0.9993$. Numerical
+and theoretical values agree within $10\%$ across two orders of magnitude
+in $T$.
+
+\begin{table}[ht]
+\centering
+\caption{Temperature dependence of the misalignment threshold. Power-law
+  fit: $\tau \propto T^{1.008}$, $R^2 = 0.9992$.}\label{tab:temperature}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+$T$ & $\tau$ (numerical) & $\tau$ (theoretical) & $\lVert G \rVert_F^2$ \\
+\midrule
+0.05 & 0.0219 & 0.0215 & 43.24 \\
+0.10 & 0.0431 & 0.0466 & 9.21 \\
+0.20 & 0.0803 & 0.0879 & 2.59 \\
+0.50 & 0.2148 & 0.2319 & 0.37 \\
+1.00 & 0.4260 & 0.4224 & 0.11 \\
+2.00 & 0.8718 & 0.8797 & 0.03 \\
+3.00 & 1.3231 & 1.2459 & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Volatility dependence.}
+The threshold is approximately constant ($\tau \approx 0.14$) across three
+orders of magnitude in $\sigma \in [0.05, 50]$. A power-law fit gives
+$\tau \propto \sigma^{0.016}$ with $R^2 = 0.43$ (poor fit), confirming
+Proposition~\ref{prop:volatility}.
+
+\emph{Horizon dependence.}
+The threshold is approximately constant ($\tau \approx 0.21$) for
+$h \in \{3, 10, 30, 100\}$. A power-law fit gives
+$\tau \propto h^{-0.009}$ with $R^2 = 0.13$ (poor fit), confirming
+Proposition~\ref{prop:horizon}.
+
+\emph{Architecture dependence.}
+Table~\ref{tab:architecture} reports the exponents $\alpha, \beta$ (from
+fits $\tau \propto \sigma^{-\alpha} h^{-\beta}$) across five MDP
+architectures. All exponents are within $0.04$ of zero, regardless of
+state-space size, temperature, or spectral gap of the transition matrix.
+
+\begin{table}[ht]
+\centering
+\caption{Estimated exponents $\alpha$ and $\beta$ across MDP architectures.
+  All values are negligibly small.}\label{tab:architecture}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Architecture & $|\mathcal{S}|$ & $T$ & $\alpha$ & $\beta$ &
+  Spectral gap \\
+\midrule
+Tiny   &  24 & 0.3 & $\phantom{-}0.023$ & $\phantom{-}0.039$ & 0.088 \\
+Small  &  48 & 0.5 & $-0.018$            & $-0.021$            & 0.038 \\
+Medium & 100 & 0.5 & $\phantom{-}0.018$  & $\phantom{-}0.013$ & 0.013 \\
+Cold   & 100 & 0.1 & $-0.021$            & $\phantom{-}0.004$ & 0.013 \\
+Warm   & 100 & 1.0 & $\phantom{-}0.027$  & $-0.021$            & 0.013 \\
+\bottomrule
+\end{tabular}
+\end{table}

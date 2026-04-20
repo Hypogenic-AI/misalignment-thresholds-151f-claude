@@ -1,0 +1,140 @@
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Refutation of the power-law hypothesis}
+
+The original hypothesis that the misalignment threshold follows
+$\tau \propto \sigma^{-\alpha} h^{-\beta}$ with $\alpha, \beta > 0$ is
+refuted for softmax-parameterized trading agents. The numerically estimated
+exponents satisfy $|\alpha| < 0.03$ and $|\beta| < 0.04$ across all tested
+architectures, consistent with the theoretical prediction of
+Propositions~\ref{prop:volatility} and~\ref{prop:horizon} that both
+exponents vanish asymptotically. The correct characterization is the
+temperature scaling law of Corollary~\ref{cor:temperature}:
+\begin{equation}\label{eq:correct-form}
+\tau(\delta) = T \sqrt{\frac{2\delta}{C(Q,\Phi)}} + O(\delta),
+\end{equation}
+where $C(Q,\Phi) = \sum_s d(s)\, \operatorname{Var}_{\pi_0(\cdot \mid s)}
+(\Phi(s,\cdot))$ depends on the Q-function and perturbation direction but
+is independent of $T$ at leading order.
+
+The physical content of this result is as follows: the softmax function
+provides a built-in sensitivity scale governed by $T$. Perturbations to
+the reward propagate through the Q-values and into the policy via the
+softmax gradient, which scales as $1/T$. The Fisher information, being
+quadratic in the gradient, scales as $1/T^2$. Market parameters $\sigma$
+and $h$ affect the Q-values, but since the softmax depends only on
+Q-differences (Remark~\ref{rem:softmax-invariance}), these effects are
+absorbed into the constant $C(Q,\Phi)$ without altering the dominant
+$T$-scaling.
+
+\subsection{Connections to existing work}
+
+\emph{Impossibility of unhackability.}
+Skalse et al.~\cite{skalse2022defining} proved that over any open set of
+stochastic policies, every non-trivial proxy reward is hackable. Our
+Theorem~\ref{thm:existence} is consistent with this result: the upper
+bound $\tau < \infty$ means that misalignment \emph{can} always be induced
+by a sufficiently strong perturbation. Our contribution is to quantify
+``sufficiently strong'' via the Fisher information.
+
+\emph{Distortion inevitability.}
+Wang and Huang~\cite{wang2026reward} showed that behavioral distortion is
+inevitable when the evaluation space has lower dimension than the true
+quality space. Their Proposition~1 establishes that the equilibrium effort
+profile $e^*$ differs from the first-best $e^{\mathrm{FB}}$. Our
+Theorem~\ref{thm:characterization} adds a quantitative prediction: the
+magnitude of deviation grows as $\varepsilon^2/(2T^2)$ (from the leading
+term of the KL expansion), providing a formula absent from their framework.
+
+\emph{Scaling laws for adversarial robustness.}
+Debenedetti et al.~\cite{debenedetti2023scaling} found that adversarial
+accuracy scales as $(\text{FLOPs})^{0.01}$---a power law with a very small
+exponent. Our finding that the volatility exponent $\alpha \approx 0.016$
+is similarly small suggests a common phenomenon: robustness metrics are
+insensitive to ``scale'' parameters (compute for neural networks, volatility
+for trading MDPs), while being primarily governed by ``architecture''
+parameters (model design for networks, temperature for softmax policies).
+
+\emph{Log-linear scaling of adversarial harm.}
+Nathanson et al.~\cite{nathanson2026scaling} observed that mean harm scales
+logarithmically with the attacker-to-target size ratio. In our framework,
+the analogous quantity is the perturbation-to-temperature ratio
+$\varepsilon/T$: the KL divergence scales as $(\varepsilon/T)^2$, so the
+``harm'' (measured by $D$) depends quadratically on this ratio rather than
+logarithmically. The discrepancy likely reflects the difference between
+finite MDP analysis and the complex dynamics of LLM-to-LLM interactions.
+
+\subsection{Practical implications}
+
+\emph{Safety auditing.}
+Our results suggest that safety audits for LLM trading agents should
+prioritize measuring the effective policy temperature---or more generally,
+the concentration of the decision distribution---rather than characterizing
+market conditions. The threshold formula
+$\tau = \sqrt{2\delta / \lVert G \rVert_F^2}$ provides a concrete,
+computable safety metric: given a desired significance level $\delta$, one
+can compute the minimum perturbation intensity that would cause detectable
+misalignment.
+
+\emph{Temperature-aware deployment.}
+Corollary~\ref{cor:temperature} implies that deploying agents with higher
+policy temperatures provides greater robustness to misalignment, at the
+cost of reduced decisiveness (Remark~\ref{rem:tradeoff}). In high-stakes
+trading environments, this suggests a principled approach to setting
+temperature: choose $T$ large enough that $\tau(\delta) = T\sqrt{2\delta/C}$
+exceeds the maximum plausible perturbation intensity, then accept the
+resulting entropy penalty.
+
+\emph{Monitoring.}
+Since $\tau$ depends primarily on $T$ and the perturbation variance $C$,
+real-time monitoring of these quantities could provide early warning of
+misalignment risk. A sudden increase in $C$ (due to a change in the
+effective perturbation landscape) would lower $\tau$ without any change
+in market conditions.
+
+\subsection{Open questions}
+
+We conclude with several directions for future work.
+
+\begin{conjecture}[Non-softmax parameterizations]\label{conj:non-softmax}
+For Gaussian policies $\pi(a \mid s) \propto \exp(-(a - \mu(s))^2 /
+(2\sigma_\pi^2))$, the misalignment threshold satisfies
+$\tau \propto \sigma_\pi$ where $\sigma_\pi$ is the policy standard
+deviation. More generally, for any exponential-family policy with natural
+parameter $\eta$, we conjecture $\tau \propto 1/\sqrt{I(\eta)}$ where
+$I(\eta)$ is the Fisher information of the family.
+\end{conjecture}
+
+\begin{enumerate}[label=(\roman*)]
+\item \emph{Multi-agent composition.} In trading systems with multiple
+  interacting LLM agents~\cite{xiao2024tradingagents}, how do individual
+  thresholds $\tau_i$ compose into a system-level threshold? The Fisher
+  information of a product of independent policies is additive, suggesting
+  $\tau_{\mathrm{system}}^{-2} = \sum_i \tau_i^{-2}$, but agent
+  interactions may break this.
+
+\item \emph{Goodhart--Campbell transition.} Wang and
+  Huang~\cite{wang2026reward} conjecture a phase transition between gaming
+  and degrading regimes. Our framework detects misalignment through KL
+  divergence, which is a smooth function of $\varepsilon$. Can a
+  discontinuity in $D(\varepsilon)$ or its derivatives signal such a
+  transition?
+
+\item \emph{Dynamic perturbations.} We studied static perturbation
+  directions $\Phi$. For time-varying or adversarially adaptive
+  perturbations, the threshold may decrease, since the adversary can
+  exploit the agent's temporal correlations. A minimax formulation
+  $\tau = \inf_\Phi \tau(\Phi)$ would capture the worst case.
+
+\item \emph{Finite-sample estimation.} In practice, $D_{\mathrm{KL}}$ is
+  estimated from finite trajectory samples. The estimation error introduces
+  a ``noise floor'' below which misalignment is undetectable. Characterizing
+  the interaction between estimation error and the threshold $\tau$ is an
+  important practical question.
+
+\item \emph{Tighter convergence rates.} The rates $O(\sigma^{-2})$ and
+  $O(h^{-1})$ in Propositions~\ref{prop:volatility} and~\ref{prop:horizon}
+  may not be tight. In particular, for very small $\sigma$ (highly
+  concentrated transitions), the behavior of $\tau(\sigma)$ may be
+  qualitatively different.
+\end{enumerate}

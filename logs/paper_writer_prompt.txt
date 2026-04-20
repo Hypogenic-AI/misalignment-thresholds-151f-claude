@@ -1,0 +1,961 @@
+You are an academic paper writer for mathematics. Generate a complete AMS-style
+paper based on the mathematical results provided.
+
+════════════════════════════════════════════════════════════════════════════════
+                         IMPORTANT: BEFORE YOU START
+════════════════════════════════════════════════════════════════════════════════
+
+Before writing any content, you MUST complete these steps:
+
+1. READ THE SKILL: Review the paper-writer skill at .claude/skills/paper-writer/SKILL.md
+2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
+3. REVIEW AMS SAMPLE: Skim paper_draft/example_paper.tex for LaTeX formatting
+   conventions ONLY — it is the official AMS journal sample file that demonstrates
+   how to use amsart theorem environments, equation formatting, list types,
+   bibliography style, and document structure. It is NOT a real paper and its
+   "content" is purely illustrative (placeholder lemmas, dummy proofs, etc.).
+   Do NOT imitate its content or narrative structure.
+4. REVIEW LANGUAGE STYLE: Browse paper_examples/ for language and exposition patterns
+5. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex)
+   are pre-copied to paper_draft/commands/
+
+CRITICAL: The AMS sample file is a LaTeX formatting reference, not a content template.
+Use it to learn \documentclass{amsart} conventions (theorem/proof environments,
+\bibliographystyle{amsplain}, author/address blocks). Write your own content
+based on the research report below.
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+# Mathematical Framework for Misalignment Sensitivity Thresholds in LLM Trading Agents
+
+## 1. Executive Summary
+
+We develop a rigorous mathematical framework for misalignment sensitivity thresholds in LLM-based trading agents, formalizing the minimum intervention intensity τ required to induce statistically significant behavioral deviation from aligned baselines. Our main theorem establishes that τ = √(2δ/F) where F is the Fisher information of the policy parameterization and δ is the statistical significance level. Contrary to the initial hypothesis that τ ∝ σ^(−α) · h^(−β), computational experiments across 100+ MDP configurations demonstrate that τ is **primarily controlled by the policy temperature T**, with τ ∝ T (R² = 0.999), while market volatility σ and decision horizon h have negligible effects (|α|, |β| &lt; 0.02). This finding has significant practical implications: the safety of LLM trading agents against misalignment is determined by their internal policy representation (how &#34;peaked&#34; their decision distributions are), not by external market conditions.
+
+## 2. Research Question &amp; Motivation
+
+### Research Question
+Does there exist a mathematically quantifiable misalignment sensitivity threshold τ for LLM-based trading agents, and what determines its magnitude?
+
+### Original Hypothesis
+τ ∝ σ^(−α) · h^(−β) where α, β &gt; 0 are architecture-dependent constants, σ is market volatility, and h is decision horizon length.
+
+### Motivation
+LLM-based trading agents are being deployed in financial markets where misalignment — deviation from intended objectives due to reward hacking or proxy optimization — can cause significant economic harm. Despite growing empirical evidence of alignment failures (Skalse et al. 2022, Wang &amp; Huang 2026) and scaling laws for adversarial robustness (Debenedetti et al. 2023, Nathanson et al. 2026), no mathematical framework exists to predict *when* misalignment becomes behaviorally significant as a function of system and market parameters.
+
+### Gap in Existing Work
+- Skalse et al. (2022) prove reward hacking is generically unavoidable but don&#39;t quantify intervention thresholds
+- Wang &amp; Huang (2026) show distortion inevitability but don&#39;t connect to market-specific parameters
+- Empirical scaling laws (Debenedetti et al. 2023) lack theoretical derivation
+- No work bridges alignment theory with mathematical finance
+
+## 3. Definitions and Notation
+
+### Definition 1 (Trading MDP)
+A *trading MDP* is a tuple M = (S, A, T_σ, R, γ, h) where S is a finite state space, A is a finite action space, T_σ : S × A × S → [0,1] is a volatility-parameterized transition function, R : S × A → ℝ is a bounded reward, γ ∈ (0,1) is the discount factor, and h ∈ ℕ is the decision horizon.
+
+### Definition 2 (Volatility-Parameterized Transitions)
+T_σ satisfies: (i) T_σ(s&#39;|s,a) is continuous in σ; (ii) H(T_σ(·|s,a)) is non-decreasing in σ (higher volatility → higher transition entropy).
+
+### Definition 3 (Intervention Operator)
+For intensity ε ≥ 0 and perturbation direction Φ : S × A → ℝ with ‖Φ‖_∞ = 1, the perturbed proxy reward is R_ε(s,a) = R_proxy(s,a) + ε·Φ(s,a).
+
+### Definition 4 (Softmax Optimal Policy)
+For temperature T &gt; 0, the softmax optimal policy under reward R is:
+$$\pi_R^T(a|s) = \frac{\exp(Q_R(s,a)/T)}{\sum_{b \in A} \exp(Q_R(s,b)/T)}$$
+where Q_R is the optimal Q-function under R.
+
+### Definition 5 (Policy Divergence)
+$$D(\varepsilon) = D_{KL}(\pi_{R_\varepsilon}^T \| \pi_{R_{\text{proxy}}}^T) = \sum_s d^{\pi_\varepsilon}(s) \sum_a \pi_\varepsilon(a|s) \log\frac{\pi_\varepsilon(a|s)}{\pi_0(a|s)}$$
+where d^π is the stationary state distribution under policy π.
+
+### Definition 6 (Misalignment Sensitivity Threshold)
+$$\tau(\delta) = \inf\{\varepsilon &gt; 0 : D(\varepsilon) &gt; \delta\}$$
+
+### Definition 7 (Policy Gradient Sensitivity)
+$$G(s,a) = \frac{\partial \pi_{R_\varepsilon}^T(a|s)}{\partial \varepsilon}\bigg|_{\varepsilon=0}$$
+
+### Definition 8 (Fisher Information Norm)
+$$\|G\|_F^2 = \sum_s d^{\pi_0}(s) \sum_a \frac{G(s,a)^2}{\pi_0(a|s)}$$
+
+## 4. Statement of Results
+
+### Theorem 1 (Existence of Threshold)
+Let M be a finite trading MDP with softmax policy parameterization at temperature T &gt; 0. For any perturbation direction Φ with ‖Φ‖_∞ = 1 and significance level δ &gt; 0, the misalignment sensitivity threshold τ(δ) exists and satisfies 0 &lt; τ(δ) &lt; ∞.
+
+### Theorem 2 (Threshold Characterization via Fisher Information)
+Under the conditions of Theorem 1, the threshold satisfies:
+$$\tau(\delta) = \sqrt{\frac{2\delta}{\|G\|_F^2}} + O(\delta)$$
+where ‖G‖²_F is the Fisher information norm of the policy gradient sensitivity.
+
+### Theorem 3 (Policy Sensitivity Formula)
+For a softmax policy π^T with temperature T, the policy gradient sensitivity is:
+$$G(s,a) = \frac{1}{T} \pi^T(a|s) \left(\Phi(s,a) - \mathbb{E}_{\pi^T(\cdot|s)}[\Phi(s,\cdot)]\right)$$
+where Φ is the perturbation direction (evaluated at fixed s).
+
+### Corollary 1 (Temperature Scaling)
+The Fisher information norm scales as ‖G‖²_F ∝ 1/T², and consequently:
+$$\tau(\delta) \propto T$$
+That is, the misalignment threshold is linear in the policy temperature.
+
+### Proposition 1 (Weak Volatility Dependence)
+For a trading MDP with Gaussian transition kernel of width σ, the threshold satisfies:
+$$\tau(\sigma) = \tau_0 + O(\sigma^{-2})$$
+where τ_0 is the threshold in the σ → ∞ (uniform transition) limit. The dependence on σ is asymptotically negligible.
+
+### Proposition 2 (Weak Horizon Dependence)
+For effective horizon h = 1/(1-γ), the threshold satisfies:
+$$\tau(h) = \tau_0 + O(h^{-1})$$
+The dependence on h is asymptotically negligible for h ≫ 1.
+
+## 5. Proofs
+
+### Proof of Theorem 1
+
+**Proof.** We show 0 &lt; τ &lt; ∞.
+
+*Lower bound (τ &gt; 0)*: Since the Q-function Q_{R_ε} is continuous in ε (the Bellman operator with reward R_ε = R_proxy + εΦ depends continuously on ε for bounded Φ), the softmax policy π^T_{R_ε} is continuous in ε. Therefore D(ε) = D_KL(π_ε ‖ π_0) is continuous in ε with D(0) = 0 &lt; δ. By continuity, there exists ε_0 &gt; 0 such that D(ε) &lt; δ for all ε ∈ [0, ε_0). Hence τ ≥ ε_0 &gt; 0.
+
+*Upper bound (τ &lt; ∞)*: For ε sufficiently large, the perturbed reward εΦ dominates R_proxy, so the perturbed policy π_ε converges to the greedy policy with respect to Φ alone, which generically differs from π_0. Specifically, for any states s where argmax_a Φ(s,a) ≠ argmax_a Q_{R_proxy}(s,a), the policy divergence D(ε) → D_KL(π_Φ ‖ π_0) &gt; 0 as ε → ∞. Since D_KL(π_Φ ‖ π_0) &gt; 0 for generic Φ, there exists ε_1 &lt; ∞ such that D(ε_1) &gt; δ. Hence τ ≤ ε_1 &lt; ∞. □
+
+### Proof of Theorem 2
+
+**Proof.** We expand D(ε) = D_KL(π_ε ‖ π_0) to second order in ε.
+
+Write π_ε(a|s) = π_0(a|s) + ε·G(s,a) + O(ε²) where G is the first-order sensitivity from Theorem 3.
+
+Expanding the KL divergence:
+$$D_{KL}(\pi_\varepsilon \| \pi_0) = \sum_s d_\varepsilon(s) \sum_a \pi_\varepsilon(a|s) \log\frac{\pi_\varepsilon(a|s)}{\pi_0(a|s)}$$
+
+For the per-state KL divergence, using the Taylor expansion log(1+x) = x - x²/2 + O(x³):
+$$\sum_a \pi_\varepsilon(a|s) \log\frac{\pi_\varepsilon(a|s)}{\pi_0(a|s)} = \sum_a (\pi_0 + \varepsilon G) \log\left(1 + \frac{\varepsilon G}{\pi_0}\right)$$
+
+$$= \sum_a (\pi_0 + \varepsilon G)\left(\frac{\varepsilon G}{\pi_0} - \frac{\varepsilon^2 G^2}{2\pi_0^2} + O(\varepsilon^3)\right)$$
+
+$$= \varepsilon \sum_a G + \frac{\varepsilon^2}{2}\sum_a \frac{G^2}{\pi_0} - \varepsilon^2 \sum_a \frac{G^2}{\pi_0} + O(\varepsilon^3)$$
+
+Since G is the derivative of a probability distribution, Σ_a G(s,a) = 0 for each s. Thus:
+
+$$D_{KL}(\pi_\varepsilon(\cdot|s) \| \pi_0(\cdot|s)) = \frac{\varepsilon^2}{2}\sum_a \frac{G(s,a)^2}{\pi_0(a|s)} + O(\varepsilon^3)$$
+
+Averaging over the stationary distribution (noting d_ε = d_0 + O(ε)):
+
+$$D(\varepsilon) = \frac{\varepsilon^2}{2} \|G\|_F^2 + O(\varepsilon^3)$$
+
+Setting D(ε) = δ and solving:
+
+$$\varepsilon = \sqrt{\frac{2\delta}{\|G\|_F^2}} + O(\delta)$$
+
+This is the infimum over ε, so τ(δ) = √(2δ/‖G‖²_F) + O(δ). □
+
+*Remark*: The O(δ) correction is justified because the O(ε³) terms in the KL expansion introduce an error proportional to ε³ = (2δ/‖G‖²_F)^{3/2}, which is O(δ^{3/2}) and thus higher order.
+
+### Proof of Theorem 3
+
+**Proof.** The softmax policy is:
+$$\pi_\varepsilon^T(a|s) = \frac{\exp(Q_\varepsilon(s,a)/T)}{\sum_b \exp(Q_\varepsilon(s,b)/T)}$$
+
+where Q_ε(s,a) = Q_{R_proxy + εΦ}(s,a). Since the Bellman equations are linear in the reward:
+$$Q_\varepsilon(s,a) = R_\varepsilon(s,a) + \gamma \sum_{s&#39;} T_\sigma(s&#39;|s,a) V_\varepsilon(s&#39;)$$
+
+we have ∂Q_ε/∂ε|_{ε=0} = Φ̃(s,a) where Φ̃ includes the one-step perturbation Φ and its discounted future effect. However, for the first-order policy response, the key computation is the softmax derivative:
+
+$$\frac{\partial}{\partial \varepsilon}\left(\frac{e^{Q_\varepsilon(s,a)/T}}{\sum_b e^{Q_\varepsilon(s,b)/T}}\right)\bigg|_{\varepsilon=0} = \frac{1}{T}\pi_0(a|s)\left(\tilde{\Phi}(s,a) - \sum_b \pi_0(b|s)\tilde{\Phi}(s,b)\right)$$
+
+This follows from the standard softmax gradient identity. The derivative of the softmax output z_i = exp(x_i)/Σ_j exp(x_j) with respect to a parameter θ is:
+$$\frac{\partial z_i}{\partial \theta} = z_i\left(\frac{\partial x_i}{\partial \theta} - \sum_j z_j \frac{\partial x_j}{\partial \theta}\right)$$
+
+Applied with z_i = π(a|s), x_i = Q(s,a)/T, and ∂x_i/∂ε = Φ̃(s,a)/T. □
+
+*Note*: For notational simplicity in the main formula, we write Φ in place of Φ̃, understanding that the perturbation direction includes discounted future effects.
+
+### Proof of Corollary 1
+
+**Proof.** From Theorem 3:
+$$G(s,a) = \frac{1}{T}\pi(a|s)(\Phi(s,a) - \mathbb{E}_\pi[\Phi(s,\cdot)])$$
+
+The Fisher information norm is:
+$$\|G\|_F^2 = \sum_s d(s) \sum_a \frac{G(s,a)^2}{\pi(a|s)} = \frac{1}{T^2}\sum_s d(s) \sum_a \pi(a|s)(\Phi(s,a) - \mathbb{E}_\pi[\Phi])^2$$
+
+$$= \frac{1}{T^2}\sum_s d(s) \text{Var}_{\pi(\cdot|s)}(\Phi(s,\cdot))$$
+
+The variance term Var_π(Φ) depends on how concentrated the policy is, which itself depends on T. However, in the regime where the Q-value spread ΔQ = max_a Q(s,a) - min_a Q(s,a) is fixed, the dominant T-scaling is:
+
+- For T ≫ ΔQ: π → uniform, Var_π(Φ) → Var_uniform(Φ) (constant), so ‖G‖²_F ∝ 1/T²
+- For T ≪ ΔQ: π → deterministic, Var_π(Φ) → 0, but ‖G‖²_F ∝ 1/T² still dominates
+
+In general, ‖G‖²_F = C(Q,Φ)/T² where C depends on the Q-values and Φ but not directly on T in the leading order. Therefore:
+
+$$\tau = \sqrt{\frac{2\delta}{\|G\|_F^2}} = T\sqrt{\frac{2\delta}{C(Q,\Phi)}} \propto T$$
+
+□
+
+### Proof of Proposition 1
+
+**Proof.** We show that the Fisher information norm has weak dependence on σ.
+
+The dependence of ‖G‖²_F on σ enters through two channels:
+1. The Q-values Q_R(s,a), which depend on T_σ through the Bellman equations
+2. The stationary distribution d^π, which depends on T_σ
+
+For the Gaussian transition kernel T_σ(s&#39;|s,a) ∝ exp(-(s&#39;-μ(s,a))²/(2σ²)), as σ → ∞ the transitions become uniform and Q-values converge to their uniform-transition limit Q_∞. The convergence rate is:
+
+$$Q_\sigma(s,a) - Q_\infty(s,a) = O(\sigma^{-2})$$
+
+This follows because the transition kernel converges to uniform at rate O(σ^{-2}) in total variation, and the Q-function depends Lipschitz-continuously on the transition kernel (with Lipschitz constant R_max/(1-γ)²).
+
+Since ‖G‖²_F depends continuously on Q through the softmax policy:
+$$\|G\|_F^2(\sigma) = \|G\|_F^2(\infty) + O(\sigma^{-2})$$
+
+Therefore τ(σ) = τ_∞ + O(σ^{-2}), establishing weak dependence. □
+
+### Proof of Proposition 2
+
+**Proof.** The horizon enters through γ = 1 - 1/h. The Q-function satisfies:
+$$Q(s,a) = R(s,a) + \gamma \sum_{s&#39;} T(s&#39;|s,a) V(s&#39;)$$
+
+For γ close to 1 (large h), the Q-values scale as Q ∝ R/(1-γ) = R·h. The Q-value *differences* (which determine the policy through softmax) are:
+
+$$Q(s,a) - Q(s,b) = R(s,a) - R(s,b) + \gamma \sum_{s&#39;} T(s&#39;|s,a)V(s&#39;) - \gamma \sum_{s&#39;} T(s&#39;|s,b)V(s&#39;)$$
+
+The reward difference is O(1), while the value difference term is O(γ·V_spread). For large h, the value spread V_spread converges to a limit (bounded by R_max/(1-γ)), making the Q-value *differences* converge.
+
+Since softmax policies depend only on Q-value differences (invariant to additive constants), the policy π and hence ‖G‖²_F converge as h → ∞:
+
+$$\|G\|_F^2(h) = \|G\|_F^2(\infty) + O(h^{-1})$$
+
+Therefore τ(h) = τ_∞ + O(h^{-1}). □
+
+## 6. Computational Verification
+
+### Setup
+All experiments use finite trading MDPs with:
+- State space: n_prices × n_positions levels
+- Actions: {sell, hold, buy}
+- Gaussian transition kernels with width σ
+- Softmax policy with temperature T
+- Threshold computed via bisection over random perturbation directions
+- Theoretical prediction via Fisher information: τ_theory = √(2δ/F_max)
+
+### 6.1 Temperature Dependence (Primary Result)
+
+| Temperature T | τ (numerical) | τ (theoretical) | Fisher info F |
+|:---:|:---:|:---:|:---:|
+| 0.05 | 0.0219 | 0.0215 | 43.24 |
+| 0.10 | 0.0431 | 0.0466 | 9.21 |
+| 0.20 | 0.0803 | 0.0879 | 2.59 |
+| 0.30 | 0.1181 | 0.1277 | 1.23 |
+| 0.50 | 0.2148 | 0.2319 | 0.37 |
+| 0.80 | 0.3364 | 0.3352 | 0.18 |
+| 1.00 | 0.4260 | 0.4224 | 0.11 |
+| 1.50 | 0.6567 | 0.6412 | 0.05 |
+| 2.00 | 0.8718 | 0.8797 | 0.03 |
+| 3.00 | 1.3231 | 1.2459 | 0.01 |
+
+**Power-law fit**: τ_numerical ∝ T^1.008 with R² = 0.9992, p &lt; 10^{-13}
+
+**Power-law fit**: τ_theoretical ∝ T^0.987 with R² = 0.9993, p &lt; 10^{-13}
+
+**Interpretation**: The threshold is almost exactly linear in T (exponent ≈ 1.0), confirming Corollary 1. Numerical and theoretical values agree within 10% across two orders of magnitude in T.
+
+### 6.2 Volatility Dependence (Null Result)
+
+| σ | τ (theoretical) |
+|:---:|:---:|
+| 0.05 | 0.1198 |
+| 0.10 | 0.1350 |
+| 0.50 | 0.1395 |
+| 1.00 | 0.1444 |
+| 5.00 | 0.1408 |
+| 10.0 | 0.1404 |
+| 50.0 | 0.1377 |
+
+**Power-law fit**: τ ∝ σ^0.016 with R² = 0.43 (poor fit)
+
+**Interpretation**: τ is approximately constant (≈ 0.14) across three orders of magnitude in σ, confirming Proposition 1. The exponent α ≈ 0.016 is negligible.
+
+### 6.3 Horizon Dependence (Null Result)
+
+| h | γ | τ (numerical) | τ (theoretical) |
+|:---:|:---:|:---:|:---:|
+| 3 | 0.667 | 0.218 | 0.207 |
+| 10 | 0.900 | 0.222 | 0.215 |
+| 30 | 0.967 | 0.203 | 0.213 |
+| 100 | 0.990 | 0.205 | 0.217 |
+
+**Power-law fit**: τ_numerical ∝ h^{-0.009} with R² = 0.13 (poor fit)
+
+**Interpretation**: τ is approximately constant (≈ 0.21) across horizons from 3 to 100, confirming Proposition 2.
+
+### 6.4 Architecture Dependence
+
+| Architecture | |S| | T | α | β | Spectral gap |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| Tiny | 24 | 0.3 | 0.023 | 0.039 | 0.088 |
+| Small | 48 | 0.5 | -0.018 | -0.021 | 0.038 |
+| Medium | 100 | 0.5 | 0.018 | 0.013 | 0.013 |
+| Cold | 100 | 0.1 | -0.021 | 0.004 | 0.013 |
+| Warm | 100 | 1.0 | 0.027 | -0.021 | 0.013 |
+
+**Interpretation**: All exponents α, β are near zero regardless of architecture, confirming that the threshold is primarily temperature-determined. The spectral gap does not significantly predict the (negligible) exponents.
+
+## 7. Discussion
+
+### 7.1 Refutation of the Original Hypothesis
+
+The original hypothesis that τ ∝ σ^(−α) · h^(−β) with α, β &gt; 0 is **refuted** for softmax-parameterized trading agents. The numerically estimated exponents are:
+- α ≈ 0.02 ± 0.02 (not significantly different from 0)
+- β ≈ 0.01 ± 0.03 (not significantly different from 0)
+
+### 7.2 The Corrected Theory
+
+The correct characterization is:
+
+**τ ∝ T · √(2δ / Var_d(Φ))**
+
+where:
+- T is the softmax temperature (the *dominant* factor)
+- δ is the significance level
+- Var_d(Φ) = Σ_s d(s) Var_{π(·|s)}(Φ(s,·)) is the policy-weighted variance of the perturbation direction
+
+This means:
+1. **Lower temperature → lower threshold → more vulnerable** to misalignment
+2. **Higher temperature → higher threshold → more robust** (but less capable)
+3. **Market conditions (σ, h) are secondary** — the threshold is an intrinsic property of the policy parameterization
+
+### 7.3 Connection to Existing Work
+
+- **Skalse et al. (2022)**: Their impossibility theorem (hackability over open policy sets) is consistent with our finding that τ &gt; 0 but finite for all finite MDPs. Our framework quantifies the &#34;size&#34; of hackability via τ.
+- **Wang &amp; Huang (2026)**: Their distortion inevitability result aligns with our Theorem 1 (τ &lt; ∞). Our Corollary 1 (τ ∝ T) adds a quantitative prediction they lack.
+- **Debenedetti et al. (2023)**: Their power law (accuracy ∝ FLOPs^0.01) has a very small exponent (0.01), consistent with our finding that the volatility exponent α ≈ 0.02 is negligibly small.
+- **Mitra (2009)**: Perturbation theory for stochastic volatility informed our analysis but the σ-dependence turned out to be second-order.
+
+### 7.4 Practical Implications
+
+1. **Safety auditing**: To assess misalignment vulnerability, measure the softmax temperature (or equivalent concentration parameter) of the agent&#39;s policy, not market conditions.
+2. **Robustness-capability tradeoff**: Increasing T makes agents more robust to misalignment (higher τ) but less capable (more random decisions). This is a fundamental tradeoff.
+3. **Temperature-aware deployment**: In high-stakes trading, using a higher policy temperature provides an adjustable safety margin, at the cost of reduced expected performance.
+
+### 7.5 Why Market Conditions Don&#39;t Matter (Intuition)
+
+The key insight is that softmax policies have a built-in &#34;sensitivity scale&#34; set by T. The Fisher information of a softmax distribution is ∝ 1/T², regardless of the underlying Q-values. Since Q-values are continuous functions of T_σ and γ, the policy changes smoothly with ε, and the rate of change is controlled by T, not by the environment parameters.
+
+Heuristically: the softmax &#34;absorbs&#34; environmental variation by adjusting Q-value magnitudes, but since it only depends on Q-value *differences* (shift-invariant), the policy sensitivity is scale-independent and thus σ-independent.
+
+## 8. Open Questions
+
+1. **Non-softmax parameterizations**: Do policies with different parameterizations (e.g., Gaussian policies, attention-based policies) show stronger σ or h dependence? The τ ∝ T result is specific to softmax.
+
+2. **Multi-agent interactions**: In trading systems with multiple LLM agents (as in TradingAgents, Xiao et al. 2024), how do individual thresholds τ_i compose? Is there a system-level threshold?
+
+3. **Goodhart-Campbell transition**: Wang &amp; Huang (2026) conjecture a phase transition between gaming and degrading. Can our threshold framework detect this transition?
+
+4. **Dynamic perturbations**: We studied static perturbations Φ. For time-varying or adversarially adaptive perturbations, does the threshold change qualitatively?
+
+5. **Finite-sample effects**: In practice, D_KL is estimated from finite samples. How does estimation error affect the effective threshold?
+
+6. **Tighter bounds in specific regimes**: For very small σ (concentrated transitions), the O(σ^{-2}) convergence rate in Proposition 1 may be improvable. What is the tight rate?
+
+## 9. Conclusions
+
+We established a rigorous mathematical framework for misalignment sensitivity thresholds in LLM trading agents. Our main contributions are:
+
+1. **Formal definition** of the misalignment sensitivity threshold τ as the minimum intervention intensity causing statistically significant behavioral deviation (Definition 6).
+
+2. **Existence theorem** (Theorem 1): τ exists and is finite for any finite MDP with softmax policies.
+
+3. **Characterization theorem** (Theorem 2): τ = √(2δ/‖G‖²_F) to leading order, connecting the threshold to the Fisher information of the policy parameterization.
+
+4. **Temperature scaling law** (Corollary 1): τ ∝ T with R² = 0.999, making temperature the primary determinant of misalignment robustness.
+
+5. **Negative results** (Propositions 1-2): Market volatility σ and decision horizon h have negligible effects on τ (|exponents| &lt; 0.02), refuting the original power-law hypothesis.
+
+These results redirect the focus of misalignment safety from external conditions (market volatility, horizon length) to internal architecture parameters (policy temperature), providing a concrete and actionable safety metric for LLM trading agent deployment.
+
+## 10. References
+
+1. Skalse, J., Howe, N., Krasheninnikov, D., Krueger, D. (2022). Defining and Characterizing Reward Hacking. *NeurIPS 2022*. arXiv:2209.13085.
+
+2. Wang, J., Huang, J. (2026). Reward Hacking as Equilibrium under Finite Evaluation. arXiv:2603.28063.
+
+3. Debenedetti, E., et al. (2023). Scaling Compute Is Not All You Need for Adversarial Robustness. arXiv:2312.13131.
+
+4. Nathanson, S., Matuszek, C., Williams, R. (2026). Scaling Patterns in Adversarial Alignment. arXiv:2511.13788.
+
+5. Mitra, S. (2009). Regime Switching Stochastic Volatility with Perturbation Based Option Pricing. arXiv:0904.1756.
+
+6. Xiao, C., et al. (2024). TradingAgents: Multi-Agents LLM Financial Trading Framework. arXiv:2412.20138.
+
+7. Liu, Z., Dang, T. (2025). FINRS: A Risk-Sensitive Trading Framework. arXiv:2511.12599.
+
+8. Fouque, J.-P., Papanicolaou, G., Sircar, K.R. (2000). *Derivatives in Financial Markets with Stochastic Volatility*. Cambridge University Press.
+
+---
+
+## Appendix: Computational Environment
+
+- Python 3.12.8
+- NumPy 2.4.4, SciPy 1.17.1, SymPy 1.14.0, Matplotlib 3.10.8
+- Random seed: 42
+- All experiments: CPU only (NVIDIA RTX A6000 available but not required)
+- Total computation time: ~5 minutes
+- Code: `src/verify_threshold_v2.py`, `src/verify_temperature.py`, `src/symbolic_proofs.py`
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+# Research Plan: Mathematical Framework for Misalignment Sensitivity Thresholds in LLM Trading Agents
+
+## Motivation &amp; Novelty Assessment
+
+### Why This Research Matters
+LLM-based trading agents are being deployed in high-stakes financial markets where misalignment—deviation from intended objectives—can cause significant economic harm. Yet there exists no rigorous mathematical characterization of *when* misalignment becomes behaviorally significant, or *how* market conditions modulate vulnerability. A formal threshold theory would provide actionable safety criteria for deployment decisions.
+
+### Gap in Existing Work
+- Skalse et al. (2022) prove that reward hacking is generically unavoidable in continuous policy spaces but don&#39;t quantify *how much* intervention triggers observable misalignment.
+- Wang &amp; Huang (2026) show distortion is inevitable under finite evaluation but don&#39;t connect to market-specific parameters (volatility, horizon).
+- Empirical scaling laws (Debenedetti et al. 2023, Nathanson et al. 2026) demonstrate power-law relationships in robustness, but lack theoretical derivation.
+- No existing work bridges alignment theory with mathematical finance (volatility regimes, decision horizons).
+
+### Our Novel Contribution
+1. **Formal definition** of misalignment sensitivity threshold τ in a trading MDP with statistical divergence criterion.
+2. **Theoretical derivation** of the power-law form τ ∝ σ^(−α) · h^(−β) from first principles (perturbation analysis + cumulative deviation bounds).
+3. **Characterization** of architecture-dependent exponents α, β via spectral properties of the policy transition kernel.
+4. **Computational verification** of the theoretical predictions on synthetic trading environments.
+
+### Experiment Justification
+- **Experiment 1 (Perturbation expansion)**: Derive τ(σ) analytically — needed to establish the σ^(−α) dependence from volatility-regime perturbation theory.
+- **Experiment 2 (Horizon analysis)**: Derive τ(h) analytically — needed to establish h^(−β) from cumulative deviation amplification.
+- **Experiment 3 (Numerical simulation)**: Verify power-law predictions on synthetic MDP — needed to validate theoretical bounds are tight.
+- **Experiment 4 (Architecture dependence)**: Compute α, β for different transition kernel classes — needed to confirm architecture dependence claim.
+
+---
+
+## Research Question
+Does there exist a mathematically rigorous misalignment sensitivity threshold τ for LLM-based trading agents, and does it follow the power-law form τ ∝ σ^(−α) · h^(−β)?
+
+## Hypothesis Decomposition
+
+### Sub-hypothesis H1: τ is well-defined
+There exists a minimal intervention intensity τ &gt; 0 such that behavioral deviation (measured by KL divergence of policy distributions) becomes statistically significant.
+
+### Sub-hypothesis H2: τ decreases with volatility (σ-dependence)
+Higher market volatility expands the effective policy space, making misalignment easier to trigger: τ ∝ σ^(−α), α &gt; 0.
+
+### Sub-hypothesis H3: τ decreases with horizon length (h-dependence)
+Longer decision horizons amplify per-step deviations through cumulative effects: τ ∝ h^(−β), β &gt; 0.
+
+### Sub-hypothesis H4: Exponents are architecture-dependent
+The values of α, β depend on the spectral gap of the agent&#39;s policy transition kernel.
+
+## Proposed Methodology
+
+### Approach
+Combine three mathematical frameworks:
+1. **MDP with perturbation-parameterized rewards** (from Skalse et al.) to define τ
+2. **Regime-switching stochastic volatility** (from Mitra/Fouque) to model σ-dependence
+3. **Cumulative deviation bounds** (concentration inequalities) for h-dependence
+
+### Key Definitions to Establish
+- Trading MDP: (S, A, T_σ, R_true, R_proxy, γ, h)
+- Intervention operator: I_ε that perturbs the proxy reward
+- Misalignment measure: D_KL(π_ε || π_0) where π_ε = optimal policy under perturbed proxy
+- Threshold: τ = inf{ε &gt; 0 : D_KL(π_ε || π_0) &gt; δ} for significance level δ
+
+### Proof Strategy
+1. **Lemma 1**: Show τ &gt; 0 (non-trivial threshold exists) using continuity of optimal policy in reward perturbation for finite MDPs.
+2. **Lemma 2**: Derive τ(σ) by analyzing how volatility affects the policy gradient sensitivity via the Fisher information of the transition kernel.
+3. **Lemma 3**: Derive τ(h) by bounding cumulative KL divergence over h steps using chain rule for KL divergence.
+4. **Main Theorem**: Combine to establish τ ∝ σ^(−α) · h^(−β) with explicit expressions for α, β.
+
+### Evaluation Metrics
+- Logical completeness of proofs (no gaps)
+- Tightness: examples showing bounds cannot be improved
+- Numerical agreement between theoretical predictions and simulated thresholds
+
+## Expected Outcomes
+- If hypothesis holds: tight power-law bounds on τ with explicit architecture-dependent exponents
+- If partially holds: bounds may be polynomial but not exact power-law; exponents may have additional dependencies
+- If refuted: counterexamples showing τ has qualitatively different functional form
+
+## Timeline
+- Phase 0-1 (Planning): 15 min ✓
+- Phase 2 (Setup, definitions): 15 min
+- Phase 3 (Proof construction): 90 min
+- Phase 4 (Numerical verification): 30 min
+- Phase 5 (Refinement): 15 min
+- Phase 6 (Documentation): 20 min
+- Buffer: 15 min
+
+## Potential Challenges
+1. The policy-to-reward map may not be smooth enough for perturbation theory — mitigate with finite MDP restriction.
+2. The power-law may only hold asymptotically — document regime of validity.
+3. KL divergence may not be the best divergence measure — consider total variation as alternative.
+
+## Success Criteria
+- At least one complete theorem with proof establishing a threshold τ
+- Functional form of τ in terms of σ and/or h derived
+- Computational verification on at least one synthetic example
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          LITERATURE REVIEW
+════════════════════════════════════════════════════════════════════════════════
+
+# Literature Review: Mathematical Framework for Misalignment Sensitivity Thresholds in LLM Trading Agents
+
+## Research Area Overview
+
+This research investigates a conjectured misalignment sensitivity threshold τ for LLM-based trading agents, defined as the minimal intervention intensity required to induce statistically significant behavioral deviation from aligned baselines. The hypothesis posits that τ follows a power law relationship with market volatility σ and decision horizon h: τ ∝ σ^(−α) · h^(−β) where α, β &gt; 0 are architecture-dependent constants.
+
+This sits at the intersection of four mathematical domains:
+1. **AI alignment theory** — formal definitions of reward hacking, hackability, and behavioral distortion
+2. **Adversarial robustness scaling laws** — power law relationships between model properties and vulnerability
+3. **Mathematical finance** — regime-switching stochastic volatility models and perturbation theory
+4. **Multi-agent systems** — LLM trading agent architectures and their decision-making frameworks
+
+---
+
+## Key Definitions
+
+**Definition 1 (Hackability, Skalse et al. 2022).** A pair of reward functions R₁, R₂ are *hackable* relative to policy set Π and environment (S, A, T, I, _, γ) if there exist π, π&#39; ∈ Π such that J₁(π) &lt; J₁(π&#39;) and J₂(π) &gt; J₂(π&#39;). Otherwise they are *unhackable*.
+
+**Definition 2 (Simplification, Skalse et al. 2022).** R₂ is a *simplification* of R₁ relative to Π if: J₁(π) &lt; J₁(π&#39;) ⟹ J₂(π) ≤ J₂(π&#39;) and J₁(π) = J₁(π&#39;) ⟹ J₂(π) = J₂(π&#39;), with at least one pair where J₂ equates policies that J₁ distinguishes.
+
+**Definition 3 (Contract Incompleteness, Wang &amp; Huang 2026).** κ ≡ (N − K)/N ∈ (0, 1), where N is the dimension of the true quality space and K &lt; N is the dimension of the evaluation space.
+
+**Definition 4 (Alignment Gap, Wang &amp; Huang 2026).** Parameter λ ∈ (0, 1) measuring the degree to which agent behavior is driven by the evaluation signal versus internalized principal objective. Effective weights: w̃ᵢ = λrᵢ + (1−λ)wᵢ for contractible dimensions (i ≤ K), w̃ᵢ = (1−λ)wᵢ for non-contractible dimensions (i &gt; K).
+
+**Definition 5 (Adversarial Perturbation).** For model f : X → ℝ^C, input x, and label y, an adversarial perturbation δ ∈ Δ is successful if argmax_c f(x + δ)_c ≠ y. Robust accuracy is the fraction of points where the model is correct for all δ with ‖δ‖_∞ ≤ ε (Debenedetti et al. 2023).
+
+**Definition 6 (Attack Success Rate, Nathanson et al. 2026).** ASR = 1 if yⱼ ≥ τ, else 0, where yⱼ is the aggregate harm score from judge models evaluating an adversarial LLM-to-LLM interaction.
+
+**Definition 7 (Regime-Switching Stochastic Volatility, Mitra 2009).** Stock price dynamics dX/X = μdt + σ(Yₜ, Zₜ)dW where Yₜ is a fast mean-reverting process (OU process) and Zₜ is a discrete-state Markov chain governing regime switches.
+
+---
+
+## Key Papers
+
+### Paper 1: Defining and Characterizing Reward Hacking (Skalse et al., NeurIPS 2022)
+- **Authors**: Joar Skalse, Nikolaus Howe, Dmitrii Krasheninnikov, David Krueger
+- **Source**: arXiv:2209.13085
+- **Main Results**:
+  - **Theorem 1**: In any MDP\R, if the policy set Π̂ contains an open set, then any pair of reward functions that are unhackable and non-trivial on Π̂ are equivalent on Π̂. This means non-trivial unhackability is impossible over all stochastic policies.
+  - **Corollary 1**: Over the set of all stationary policies, unhackable and non-trivial reward pairs must be equivalent.
+  - Non-trivial unhackable pairs exist for finite policy sets and deterministic policies.
+  - The linearity of reward in state-action visit counts (J(π) = ⟨R, F^π⟩) makes unhackability extremely restrictive.
+- **Proof Techniques**: Embedding policies into Euclidean space via visit counts F^π, using topological arguments (open sets, homeomorphisms), and the linear structure of expected reward.
+- **Relevance**: Provides the foundational formalism for understanding when proxy optimization can diverge from true objectives — directly applicable to defining the misalignment threshold τ. The impossibility result over continuous policy sets motivates focusing on finite/discrete policy restrictions (as in trading with discrete actions).
+
+### Paper 2: Reward Hacking as Equilibrium under Finite Evaluation (Wang &amp; Huang, 2026)
+- **Authors**: Jiacheng Wang, Jinbin Huang
+- **Source**: arXiv:2603.28063
+- **Main Results**:
+  - **Proposition 1 (Inevitability of Distortion)**: Under Axioms 1-4 (multi-dimensional quality, finite evaluation, effective optimization, resource finiteness), with alignment gap λ ∈ (0,1) and K &lt; N: (a) e*ᵢ ≤ eᵢ^FB for non-contractible dimensions, (b) e* ≠ e^FB, (c) W(q*) &lt; W(q^FB).
+  - **Proposition 2 (Agentic Amplification)**: With T composable tools, quality dimensions N(T) ≥ T + α(T choose 2) grow combinatorially, while evaluation coverage K grows at most linearly. Hence distortion severity increases without bound.
+  - **Conjecture**: Existence of a capability threshold beyond which agents transition from Goodhart regime (gaming within evaluation) to Campbell regime (actively degrading evaluation).
+  - **Distortion Index**: D_i = |w̃ᵢ/wᵢ − 1| predicts direction and severity of behavioral distortion per dimension.
+- **Proof Techniques**: Multi-task principal-agent model (Holmström-Milgrom 1991), Lagrangian optimization with KKT conditions, monotone reallocation lemma for comparing optimization under different weight vectors.
+- **Relevance**: **Critically important** — directly formalizes the concept of a threshold for misalignment severity. The distortion index D_i and the Goodhart-Campbell transition conjecture map directly to our τ threshold. The agentic amplification result is relevant for trading agents with multiple tool capabilities.
+
+### Paper 3: Scaling Compute Is Not All You Need for Adversarial Robustness (Debenedetti et al., 2023)
+- **Authors**: Edoardo Debenedetti, Zishen Wan, Maksym Andriushchenko, et al.
+- **Source**: arXiv:2312.13131
+- **Main Results**:
+  - **Power law for adversarial robustness**: accuracy = C × (FLOPs)^α, with estimated α* = 0.01 and C* = 50.86 (very slow growth).
+  - Power law also holds for electricity cost (α* = 0.95) and CO₂ emissions (α* = 0.95) vs. FLOPs, both with R² = 0.95.
+  - Synthetic data, training loss, and model parameters are the most important features predicting adversarial robustness.
+  - Scaling up model size does not yield proportionate improvements in adversarial robustness, unlike standard training.
+- **Proof Techniques**: Empirical scaling law fitting (log-log regression), gradient boosting regression for feature importance analysis, systematic ablation across 320 models.
+- **Relevance**: Establishes the precedent of power law relationships in adversarial robustness — the same mathematical form hypothesized for τ. The very small exponent α = 0.01 suggests diminishing returns from scaling, analogous to our threshold decreasing with volatility/horizon.
+
+### Paper 4: Scaling Patterns in Adversarial Alignment (Nathanson et al., 2026)
+- **Authors**: Samuel Nathanson, Cynthia Matuszek, Rebecca Williams
+- **Source**: arXiv:2511.13788
+- **Main Results**:
+  - Mean harm correlates with log(attacker-to-target size ratio): Pearson r = 0.510, Spearman ρ = 0.519, both p &lt; 0.001.
+  - Mean harm variance higher across attackers (0.180) than targets (0.097): attacker capability matters more than target vulnerability.
+  - Attacker refusal frequency strongly negatively correlated with harm (ρ = −0.927).
+  - Over 6000 multi-turn adversarial interactions across 0.6B–120B parameter models.
+- **Proof Techniques**: Empirical correlation analysis, multi-model adversarial simulation framework, judge-based harm scoring.
+- **Relevance**: Demonstrates that adversarial vulnerability scales with the logarithm of capability ratios — a scaling law connecting model capacity to alignment breakdowns. The logarithmic relationship is consistent with power-law functional forms.
+
+### Paper 5: Adversarial Robustness Limits via Scaling-Law and Human-Alignment Studies (2024)
+- **Source**: arXiv:2404.09349
+- **Main Results**: First scaling laws for adversarial training showing how model size, dataset size, and synthetic data quality affect robustness. SOTA methods diverge from compute-optimal setups.
+- **Relevance**: Additional evidence for scaling laws in robustness, providing functional forms that may inform the architecture-dependent constants α, β in our hypothesis.
+
+### Paper 6: Regime Switching Stochastic Volatility with Perturbation Based Option Pricing (Mitra, 2009)
+- **Authors**: Sovan Mitra
+- **Source**: arXiv:0904.1756
+- **Main Results**:
+  - Proposes regime-switching models with mean-reverting stochastic volatility: dX/X = μdt + σ(Yₜ, Zₜ)dW where Zₜ is a discrete Markov chain.
+  - Uses Fouque&#39;s perturbation theory for option pricing under these models.
+  - Demonstrates lower relative error compared to Black-Scholes and standard Fouque pricing.
+- **Proof Techniques**: Singular and regular perturbation expansions, fast mean-reversion asymptotics, Markov chain regime switching.
+- **Relevance**: Provides the mathematical framework for modeling market volatility σ in our hypothesis. The perturbation approach is directly applicable to analyzing how small perturbations in the volatility regime affect agent behavior thresholds.
+
+### Paper 7: TradingAgents: Multi-Agents LLM Financial Trading Framework (Xiao et al., 2024)
+- **Source**: arXiv:2412.20138
+- **Relevance**: Provides the practical architecture for multi-agent LLM trading systems that would be subject to misalignment thresholds.
+
+### Paper 8: FINRS: A Risk-Sensitive Trading Framework (Liu &amp; Dang, 2025)
+- **Source**: arXiv:2511.12599
+- **Relevance**: Demonstrates risk-sensitive trading with LLM agents, including multi-step prediction and position management — the decision horizon h in our hypothesis.
+
+---
+
+## Known Results (Prerequisite Theorems)
+
+### Theorem (Skalse et al. 2022, Theorem 1): Impossibility of Non-Trivial Unhackability on Open Policy Sets
+**Statement**: In any MDP\R, if Π̂ contains an open set, then any pair of reward functions that are unhackable and non-trivial on Π̂ are equivalent on Π̂.
+- **Source**: arXiv:2209.13085, Section 5.1
+- **Used for**: Justifies that misalignment (hackability) is generically present in continuous policy spaces; our threshold τ quantifies *when* hackability becomes behaviorally significant.
+
+### Proposition (Wang &amp; Huang 2026, Proposition 1): Inevitability of Distortion
+**Statement**: Under finite evaluation (K &lt; N), the agent&#39;s equilibrium effort e* systematically under-invests in non-contractible dimensions relative to the first-best e^FB.
+- **Source**: arXiv:2603.28063, Section 3.2
+- **Used for**: The structural inevitability of distortion establishes that τ &gt; 0 always exists; the question becomes quantifying its magnitude.
+
+### Scaling Law (Debenedetti et al. 2023): Power Law for Adversarial Robustness
+**Statement**: accuracy = C × (FLOPs)^α with α ≈ 0.01.
+- **Source**: arXiv:2312.13131, Eq. (4)
+- **Used for**: Provides empirical precedent for power-law relationship in robustness metrics, supporting the hypothesized form τ ∝ σ^(−α) · h^(−β).
+
+### Correlation (Nathanson et al. 2026): Log-Linear Scaling of Adversarial Harm
+**Statement**: Mean harm ∝ log(attacker_size / target_size), r = 0.510, p &lt; 0.001.
+- **Source**: arXiv:2511.13788, Section 4
+- **Used for**: Establishes that adversarial vulnerability has a logarithmic/power-law functional form with respect to capability ratios.
+
+### Perturbation Expansion (Fouque et al. 2000 / Mitra 2009): Fast Mean-Reversion Asymptotics
+**Statement**: Option price P^ε = P₀ + √ε P₁ + ε P₂ + ... under fast mean-reverting stochastic volatility with rate 1/ε.
+- **Source**: arXiv:0904.1756
+- **Used for**: Mathematical technique for analyzing how small perturbations (interventions of intensity τ) propagate through volatility-dependent decision systems.
+
+---
+
+## Proof Techniques in the Literature
+
+### 1. Policy Space Embedding (from Skalse et al.)
+Policies are embedded into Euclidean space via visit counts F^π or action probabilities G(π). The linear structure J(π) = ⟨R, F^π⟩ constrains the geometry of hackable/unhackable pairs. This technique could be used to characterize the threshold τ geometrically as the minimum perturbation that moves the proxy-optimal policy outside the true-optimal region.
+
+### 2. Principal-Agent Optimization (from Wang &amp; Huang)
+Lagrangian optimization with KKT conditions under finite evaluation constraints. The distortion index D_i = |w̃ᵢ/wᵢ − 1| provides a per-dimension measure of misalignment severity. Could be adapted to define τ as the critical value of an aggregate distortion measure across trading dimensions.
+
+### 3. Scaling Law Fitting (from Debenedetti et al.)
+Log-log regression to identify power law relationships: y = C · x^α. The technique of fitting power laws to empirical data across orders of magnitude in compute can be adapted to fit τ vs. (σ, h) relationships from simulation data.
+
+### 4. Perturbation Theory (from Mitra)
+Singular/regular perturbation expansion around fast mean-reverting stochastic volatility. The small parameter ε (reciprocal of mean-reversion rate) provides a natural expansion parameter. This technique is directly applicable to expanding agent behavior around the aligned baseline as a function of intervention intensity.
+
+### 5. Multi-Model Adversarial Simulation (from Nathanson et al.)
+Systematic evaluation of LLM-to-LLM interactions across model scales with judge-based scoring. This experimental framework can be adapted to measure misalignment thresholds empirically across different trading environments.
+
+---
+
+## Related Open Problems
+
+1. **Goodhart-Campbell Transition Threshold**: Wang &amp; Huang (2026) conjecture the existence of a capability threshold beyond which agents transition from gaming within the evaluation system to actively degrading it. Formalizing this threshold mathematically is directly related to our τ.
+
+2. **Approximate Unhackability**: Skalse et al. (2022) note that future work should explore when hackable proxies can be shown safe in a &#34;probabilistic or approximate sense, or when subject to only limited optimization.&#34; This is essentially the question of quantifying τ.
+
+3. **Scaling Laws for Alignment**: Whether alignment properties follow power laws analogous to capability scaling laws (Kaplan et al. 2020) remains open. Our hypothesis that τ ∝ σ^(−α) · h^(−β) would contribute to this question.
+
+4. **Volatility-Dependent Agent Robustness**: No existing work formally connects market volatility regimes to LLM agent alignment properties. This is a novel contribution of the proposed research.
+
+5. **Decision Horizon Effects on Misalignment**: The relationship between planning horizon length and susceptibility to misalignment has not been mathematically formalized.
+
+---
+
+## Gaps and Opportunities
+
+1. **No existing mathematical framework connects volatility to alignment thresholds**: While regime-switching models exist for volatility and formal definitions exist for reward hacking, no work bridges these domains.
+
+2. **Power law relationships in alignment are empirical, not proven**: The scaling laws in Debenedetti et al. and Nathanson et al. are empirical fits. A theoretical derivation of the power-law form τ ∝ σ^(−α) · h^(−β) would be novel.
+
+3. **Architecture dependence of α, β is unexplored**: The hypothesis that the exponents are architecture-dependent has no existing theoretical or empirical basis.
+
+4. **Trading-specific misalignment not studied**: While LLM trading agents exist (TradingAgents, ATLAS, FinRS), their vulnerability to misalignment has not been studied through the lens of sensitivity thresholds.
+
+---
+
+## Recommendations for Proof Strategy
+
+### Recommended Approach
+1. **Define the misalignment sensitivity threshold τ formally** using the reward hacking framework of Skalse et al. (2022) adapted to a trading MDP with volatility-dependent transitions.
+2. **Model the trading environment** as an MDP with regime-switching stochastic volatility (following Mitra 2009), where the transition function T depends on market state including σ.
+3. **Apply the principal-agent distortion framework** (Wang &amp; Huang 2026) to derive τ as a function of the distortion index D_i, where the dimensions correspond to trading quality dimensions (profit, risk management, compliance, etc.).
+4. **Derive the power law form** by perturbation expansion around the aligned equilibrium, using the fast mean-reversion asymptotics from Fouque/Mitra to establish how σ enters the threshold through the volatility dynamics.
+5. **Establish the h-dependence** through discounted reward analysis, where longer horizons (larger h) amplify small per-step deviations exponentially through the discount structure.
+
+### Key Lemmas to Establish
+- Lemma: In a volatility-regime-dependent MDP, the set of hackable reward pairs expands as σ increases (lower threshold for observable behavioral deviation).
+- Lemma: For finite decision horizons h, the minimum detectable distortion decreases monotonically with h (longer horizons make misalignment more detectable, hence τ decreases).
+- Lemma: The exponents α, β depend on the spectral properties of the transition kernel (architecture dependence).
+
+### Potential Obstacles
+- The infinite-dimensional nature of the stochastic policy space creates impossibility results (Theorem 1 of Skalse et al.) that must be carefully navigated by restricting to practically relevant finite policy sets.
+- Connecting the abstract MDP formalism to the specific structure of LLM trading agents requires careful modeling assumptions.
+- The power law form may only hold approximately or in specific regimes.
+
+### Computational Support
+- Use SymPy for symbolic computation of perturbation expansions and threshold expressions.
+- Use NumPy/SciPy for numerical verification of the power-law relationship with simulated data.
+- Use NetworkX for modeling the structure of multi-agent trading systems if needed.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          PAPER REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Generate a complete mathematics paper with the following structure:
+
+1. TITLE
+   - Clear, specific, informative
+   - Should convey the main result or the mathematical objects studied
+   - Mathematical convention: concise and precise
+
+2. AUTHOR
+   - Use this exact author line: NeuriCo
+
+3. ABSTRACT (150-250 words)
+   - State the problem or question investigated
+   - Summarize the main results (theorem statements in words)
+   - Mention proof techniques used
+   - Note any computational verification
+
+4. INTRODUCTION
+   - Mathematical problem and motivation
+   - History and context of the problem
+   - Summary of known results (with citations)
+   - Statement of main contributions (informal preview)
+   - Paper organization
+
+5. PRELIMINARIES
+   - Notation and conventions
+   - Definitions needed for the paper
+   - Prerequisite results (stated with citations, not reproved)
+   - This section ensures the paper is self-contained
+
+6. MAIN RESULTS
+   - Formal theorem statements
+   - Complete proofs
+   - Supporting lemmas and propositions with proofs
+   - Examples illustrating the results
+   - Remarks connecting to other areas
+
+7. DISCUSSION
+   - Implications of the results
+   - Connections to related problems
+   - Open questions and conjectures
+   - Possible generalizations
+
+8. CONCLUSION
+   - Summary of contributions
+   - Future directions
+
+9. REFERENCES
+   - BibTeX format
+   - All cited papers and textbooks
+
+════════════════════════════════════════════════════════════════════════════════
+                          OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+Create a MODULAR LaTeX project with the following directory structure:
+
+paper_draft/
+├── main.tex              # Main file that imports all sections
+├── references.bib        # BibTeX references
+├── sections/
+│   ├── abstract.tex      # Abstract content
+│   ├── introduction.tex  # Introduction section
+│   ├── preliminaries.tex # Definitions, notation, prerequisites
+│   ├── main_results.tex  # Theorems and proofs
+│   ├── discussion.tex    # Discussion and open questions
+│   └── conclusion.tex    # Conclusion section
+├── figures/              # Directory for any generated figures
+└── appendix/             # Directory for appendix sections (if needed)
+
+INSTRUCTIONS:
+1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/appendix)
+2. Write main.tex using the AMS document class with proper theorem environments:
+
+   \documentclass{amsart}
+   \usepackage{amsmath,amssymb,amsthm}
+   \usepackage[hidelinks]{hyperref}
+   \usepackage{graphicx}
+   \usepackage{enumitem}
+
+   % Theorem environments
+   \newtheorem{theorem}{Theorem}[section]
+   \newtheorem{lemma}[theorem]{Lemma}
+   \newtheorem{proposition}[theorem]{Proposition}
+   \newtheorem{corollary}[theorem]{Corollary}
+   \newtheorem{conjecture}[theorem]{Conjecture}
+
+   \theoremstyle{definition}
+   \newtheorem{definition}[theorem]{Definition}
+   \newtheorem{example}[theorem]{Example}
+
+   \theoremstyle{remark}
+   \newtheorem{remark}[theorem]{Remark}
+
+   % Import command files (if they exist)
+   \InputIfFileExists{commands/math}{}{}
+   \InputIfFileExists{commands/general}{}{}
+   \InputIfFileExists{commands/macros}{}{}
+
+   % Bibliography style
+   \bibliographystyle{amsplain}
+
+   \author{NeuriCo}
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
+3. Write each section file with COMPLETE content (no placeholders)
+4. Each section file should include its \section{} command
+5. Write references.bib with all citations in BibTeX format
+6. After writing all files, compile the paper:
+   cd paper_draft && pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+
+NOTE ON DOCUMENT CLASS:
+- Use \documentclass{amsart} (NOT \documentclass{article} with \usepackage{style})
+- The amsart class is part of the standard LaTeX distribution — no .sty file needed
+- It provides proper formatting for mathematical papers: theorem numbering,
+  proof environments, AMS math fonts, and standard math journal layout
+
+This modular structure allows humans to easily:
+- Edit individual sections without navigating a large file
+- Track changes per section
+- Reuse sections across different paper versions
+
+════════════════════════════════════════════════════════════════════════════════
+                          QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+- Academic mathematical tone throughout
+- Every theorem must have a complete proof
+- All definitions must be precise and unambiguous
+- Proper citations using \cite{} commands
+- NO placeholder text - every section must have real content
+- The paper MUST compile without errors
+- If compilation fails, debug and fix the LaTeX errors
+
+════════════════════════════════════════════════════════════════════════════════
+                       MATHEMATICAL WRITING STYLE
+════════════════════════════════════════════════════════════════════════════════
+
+Follow these conventions for mathematical papers:
+
+1. LANGUAGE STYLE:
+   - Use "we" for collaborative exposition: "We prove", "We show", "We define"
+   - Be precise and direct: state results clearly before proving them
+   - Prefer plain language: "We now prove..." over "We shall henceforth demonstrate..."
+   - Use the present tense for mathematical facts: "Theorem 1 shows..."
+   - Avoid vague language: instead of "clearly" or "obviously", explain why
+
+2. INTRODUCTION STRUCTURE:
+   - Context and motivation (why this problem matters)
+   - History (what's known, with citations)
+   - Statement of results (informal but precise)
+   - Proof techniques (brief overview of methods)
+   - Paper organization (roadmap)
+
+3. THEOREM ENVIRONMENTS:
+   Use proper LaTeX theorem environments:
+   \begin{theorem}\label{thm:main}
+     Let $G$ be a graph with $n$ vertices. Then...
+   \end{theorem}
+
+   \begin{proof}
+     We proceed by induction on $n$. ...
+   \end{proof}
+
+4. DEFINITIONS:
+   \begin{definition}\label{def:widget}
+     A \emph{widget} is a pair $(X, \tau)$ where...
+   \end{definition}
+
+   - Italicize the term being defined using \emph{}
+   - State all conditions explicitly
+   - Give examples immediately after non-trivial definitions
+
+5. PROOF STRUCTURE:
+   - Begin with proof strategy: "The proof proceeds in two steps..."
+   - Number or label key claims within proofs
+   - Use \qedhere for proofs ending in displayed equations
+   - Signal transitions: "It remains to show...", "We now verify..."
+
+6. NOTATION CONVENTIONS:
+   - Define all notation in Preliminaries
+   - Use standard notation: $\mathbb{R}$, $\mathbb{Z}$, $\mathbb{N}$
+   - Use \coloneqq or := for definitions
+   - Be consistent: one symbol = one meaning throughout
+
+7. MATHEMATICAL FORMATTING:
+   - Displayed equations for important formulas: \[ ... \]
+   - Inline math for brief expressions: $...$
+   - Use align environment for multi-line equations
+   - Number only equations that are referenced later
+
+8. REFERENCES AND CITATIONS:
+   - Cite prior results when used: "By \cite{author2024}..."
+   - Distinguish between "Theorem 3 of \cite{...}" and your own results
+   - Include both classic references and recent work
+
+9. EXAMPLES AND COUNTEREXAMPLES:
+   - Illustrate each major result with a concrete example
+   - Show tightness: counterexamples demonstrating necessity of hypotheses
+   - Use \begin{example} ... \end{example} environment
+
+10. FIGURES (if applicable):
+    - Diagrams for geometric arguments
+    - Graphs or plots from computational verification
+    - Commutative diagrams for algebraic results
+    - Use TikZ or include pre-generated figures
+
+════════════════════════════════════════════════════════════════════════════════
+                          WORKFLOW: REVIEW AND REFLECT
+════════════════════════════════════════════════════════════════════════════════
+
+Before calling finish, you MUST complete these review steps:
+
+1. REVIEW RESOURCES (at the start):
+   - Read .claude/skills/paper-writer/SKILL.md for detailed guidance
+   - Study templates/paper_writing/lab_style_guide.md for style conventions
+   - Skim paper_draft/example_paper.tex for amsart LaTeX conventions only
+   - Browse paper_examples/ for language patterns (if available)
+
+2. SELF-REFLECTION (before finishing):
+   After writing all sections, review your work against these criteria:
+
+   MATHEMATICAL CONTENT CHECK:
+   - [ ] Every theorem has a complete, rigorous proof
+   - [ ] All definitions are precise with explicit quantifiers
+   - [ ] Examples illustrate major results
+   - [ ] Counterexamples show necessity of hypotheses where applicable
+   - [ ] Notation is consistent throughout
+
+   FORMATTING CHECK:
+   - [ ] Theorem environments (\begin{theorem}...\end{theorem}) used properly
+   - [ ] Proof environments (\begin{proof}...\end{proof}) used for all proofs
+   - [ ] Is hyperref package included for clickable references?
+   - [ ] Labels and cross-references work correctly
+   - [ ] Bibliography entries are complete
+
+   STRUCTURE CHECK:
+   - [ ] Introduction previews main results clearly
+   - [ ] Preliminaries section makes the paper self-contained
+   - [ ] Results are ordered logically (lemmas before theorems that use them)
+   - [ ] Does the paper compile without errors?
+
+3. FIX ISSUES:
+   - Address any issues found in the self-reflection
+   - Re-compile and verify the PDF looks correct
+
+Only after completing this review should you consider the paper finished.

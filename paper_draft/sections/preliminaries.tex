@@ -1,0 +1,141 @@
+\section{Preliminaries}\label{sec:prelim}
+
+We work throughout with finite MDPs. All logarithms are natural. For a
+finite set $X$, we write $\Delta(X)$ for the set of probability
+distributions on $X$. For a distribution $p \in \Delta(X)$, we write
+$H(p) = -\sum_{x} p(x) \log p(x)$ for the Shannon entropy and
+$D_{\mathrm{KL}}(p \| q) = \sum_x p(x) \log \frac{p(x)}{q(x)}$ for the
+Kullback--Leibler divergence. We use the convention $0 \log 0 = 0$.
+
+\subsection{Trading MDPs}
+
+\begin{definition}[Trading MDP]\label{def:trading-mdp}
+A \emph{trading MDP} is a tuple $\mathcal{M} = (\mathcal{S}, \mathcal{A},
+\mathcal{T}_\sigma, R, \gamma, h)$ where:
+\begin{enumerate}[label=(\roman*)]
+\item $\mathcal{S}$ is a finite state space;
+\item $\mathcal{A}$ is a finite action space;
+\item $\mathcal{T}_\sigma \colon \mathcal{S} \times \mathcal{A} \times
+  \mathcal{S} \to [0,1]$ is a volatility-parameterized transition function,
+  with $\sigma > 0$;
+\item $R \colon \mathcal{S} \times \mathcal{A} \to \mathbb{R}$ is a bounded
+  reward function;
+\item $\gamma \in (0,1)$ is the discount factor;
+\item $h = 1/(1-\gamma)$ is the effective decision horizon.
+\end{enumerate}
+\end{definition}
+
+We impose a regularity condition on the transition function that formalizes
+the intuition that higher volatility produces less predictable transitions.
+
+\begin{definition}[Volatility-parameterized transitions]\label{def:vol-transitions}
+The transition function $\mathcal{T}_\sigma$ is \emph{volatility-parameterized}
+if:
+\begin{enumerate}[label=(\roman*)]
+\item $\mathcal{T}_\sigma(s' \mid s, a)$ is continuous in $\sigma$ for all
+  $s, s' \in \mathcal{S}$ and $a \in \mathcal{A}$;
+\item $H(\mathcal{T}_\sigma(\cdot \mid s, a))$ is non-decreasing in $\sigma$
+  for all $s \in \mathcal{S}$ and $a \in \mathcal{A}$.
+\end{enumerate}
+\end{definition}
+
+A canonical example is the discretized Gaussian kernel: for a one-dimensional
+state space $\mathcal{S} = \{s_1, \ldots, s_n\}$ with mean transition target
+$\mu(s,a)$, define
+\begin{equation}\label{eq:gaussian-kernel}
+\mathcal{T}_\sigma(s_j \mid s_i, a) = \frac{\exp\bigl(-(s_j - \mu(s_i, a))^2
+  / (2\sigma^2)\bigr)}{\sum_{k=1}^n \exp\bigl(-(s_k - \mu(s_i, a))^2 /
+  (2\sigma^2)\bigr)}.
+\end{equation}
+This satisfies Definition~\ref{def:vol-transitions}: as $\sigma \to \infty$,
+the kernel converges to the uniform distribution on $\mathcal{S}$.
+
+\subsection{Interventions and softmax policies}
+
+\begin{definition}[Intervention operator]\label{def:intervention}
+For intensity $\varepsilon \geq 0$ and a \emph{perturbation direction}
+$\Phi \colon \mathcal{S} \times \mathcal{A} \to \mathbb{R}$ with
+$\lVert \Phi \rVert_\infty = 1$, the \emph{perturbed proxy reward} is
+\[
+R_\varepsilon(s,a) = R_{\mathrm{proxy}}(s,a) + \varepsilon \, \Phi(s,a).
+\]
+\end{definition}
+
+\begin{definition}[Softmax optimal policy]\label{def:softmax-policy}
+For temperature $T > 0$, the \emph{softmax optimal policy} under reward $R$
+is
+\begin{equation}\label{eq:softmax}
+\pi_R^T(a \mid s) = \frac{\exp\bigl(Q_R(s,a)/T\bigr)}{\sum_{b \in
+  \mathcal{A}} \exp\bigl(Q_R(s,b)/T\bigr)},
+\end{equation}
+where $Q_R$ is the optimal Q-function under $R$, satisfying
+\[
+Q_R(s,a) = R(s,a) + \gamma \sum_{s' \in \mathcal{S}} \mathcal{T}_\sigma(s'
+  \mid s, a) \max_{b \in \mathcal{A}} Q_R(s', b).
+\]
+\end{definition}
+
+\begin{remark}\label{rem:softmax-invariance}
+The softmax policy $\pi_R^T$ depends on $Q_R$ only through the differences
+$Q_R(s,a) - Q_R(s,b)$, since adding a state-dependent constant $c(s)$ to all
+Q-values leaves $\pi_R^T$ unchanged. This shift-invariance is central to the
+weak dependence of the threshold on market parameters established in
+Section~\ref{sec:main}.
+\end{remark}
+
+\subsection{Policy divergence and the misalignment threshold}
+
+We write $\pi_\varepsilon = \pi_{R_\varepsilon}^T$ for the softmax policy
+under the perturbed reward $R_\varepsilon$, and $\pi_0 = \pi_{R_{\mathrm{proxy}}}^T$
+for the unperturbed baseline.
+
+\begin{definition}[Policy divergence]\label{def:policy-divergence}
+The \emph{policy divergence} at perturbation intensity $\varepsilon$ is
+\begin{equation}\label{eq:policy-divergence}
+D(\varepsilon) = \sum_{s \in \mathcal{S}} d^{\pi_\varepsilon}(s) \sum_{a \in
+  \mathcal{A}} \pi_\varepsilon(a \mid s) \log \frac{\pi_\varepsilon(a \mid
+  s)}{\pi_0(a \mid s)},
+\end{equation}
+where $d^{\pi}(s)$ is the stationary state distribution under policy $\pi$.
+\end{definition}
+
+\begin{definition}[Misalignment sensitivity threshold]\label{def:threshold}
+For significance level $\delta > 0$, the \emph{misalignment sensitivity
+threshold} is
+\begin{equation}\label{eq:threshold}
+\tau(\delta) = \inf\bigl\{\varepsilon > 0 : D(\varepsilon) > \delta \bigr\}.
+\end{equation}
+\end{definition}
+
+Informally, $\tau(\delta)$ measures the minimum adversarial perturbation
+required to produce a statistically significant change in agent behavior.
+Small $\tau$ indicates high vulnerability; large $\tau$ indicates robustness.
+
+\subsection{Policy gradient sensitivity and Fisher information}
+
+We define two quantities that play a central role in the characterization of
+$\tau$.
+
+\begin{definition}[Policy gradient sensitivity]\label{def:gradient-sensitivity}
+The \emph{policy gradient sensitivity} is
+\begin{equation}\label{eq:gradient}
+G(s,a) = \frac{\partial \pi_{R_\varepsilon}^T(a \mid s)}{\partial
+  \varepsilon}\bigg|_{\varepsilon = 0}.
+\end{equation}
+\end{definition}
+
+\begin{definition}[Fisher information norm]\label{def:fisher}
+The \emph{Fisher information norm} of $G$ is
+\begin{equation}\label{eq:fisher}
+\lVert G \rVert_F^2 = \sum_{s \in \mathcal{S}} d^{\pi_0}(s) \sum_{a \in
+  \mathcal{A}} \frac{G(s,a)^2}{\pi_0(a \mid s)}.
+\end{equation}
+\end{definition}
+
+\begin{remark}\label{rem:fisher-interpretation}
+The quantity $\lVert G \rVert_F^2$ is the Fisher information of the
+one-parameter family $\{\pi_\varepsilon\}_{\varepsilon \geq 0}$ evaluated at
+$\varepsilon = 0$, averaged over the stationary state distribution. It
+measures the sensitivity of the policy to infinitesimal reward perturbations
+in the direction $\Phi$.
+\end{remark}
